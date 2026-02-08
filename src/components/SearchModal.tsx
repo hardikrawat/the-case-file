@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+
 
 interface SearchResult {
     boards: Array<{
@@ -19,7 +20,6 @@ interface SearchResult {
 }
 
 export default function SearchModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-    const router = useRouter();
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<SearchResult | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -93,12 +93,12 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean; onCl
             />
 
             {/* Modal */}
-            <div className="relative w-full max-w-2xl bg-stone-900 border border-stone-700 rounded-xl shadow-2xl overflow-hidden">
+            <div className="relative w-full max-w-2xl bg-[var(--panel-background)] border border-[var(--panel-border)] rounded-xl shadow-2xl overflow-hidden transition-colors duration-500">
                 {/* Search Input */}
-                <div className="p-4 border-b border-stone-800">
+                <div className="p-4 border-b border-[var(--panel-border)]/50">
                     <div className="relative">
                         <svg
-                            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-500"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--panel-foreground)]/40"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -116,27 +116,27 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean; onCl
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder="Search boards, users..."
-                            className="w-full pl-10 pr-4 py-3 bg-stone-800 border border-stone-700 rounded-lg text-stone-200 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-transparent"
+                            className="w-full pl-10 pr-4 py-3 bg-[var(--background)] border border-[var(--panel-border)] rounded-lg text-[var(--foreground)] placeholder-[var(--panel-foreground)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--sidebar-accent)]/50 focus:border-transparent transition-all"
                         />
                         {isLoading && (
                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                                <div className="w-5 h-5 border-2 border-[var(--sidebar-accent)] border-t-transparent rounded-full animate-spin" />
                             </div>
                         )}
                     </div>
                 </div>
 
                 {/* Results */}
-                <div className="max-h-96 overflow-y-auto p-4">
+                <div className="max-h-96 overflow-y-auto p-4 custom-scrollbar">
                     {!query && (
-                        <div className="text-center py-12 text-stone-500">
-                            <p>Start typing to search...</p>
+                        <div className="text-center py-12 text-[var(--panel-foreground)]/40">
+                            <p className="font-medium tracking-wide">Start typing to search...</p>
                         </div>
                     )}
 
                     {query && query.length < 2 && (
-                        <div className="text-center py-12 text-stone-500">
-                            <p>Type at least 2 characters</p>
+                        <div className="text-center py-12 text-[var(--panel-foreground)]/40">
+                            <p className="font-medium tracking-wide">Type at least 2 characters</p>
                         </div>
                     )}
 
@@ -145,8 +145,8 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean; onCl
                             {/* Boards */}
                             {results.boards.length > 0 && (
                                 <div>
-                                    <h3 className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">
-                                        Boards ({results.boards.length})
+                                    <h3 className="text-[10px] font-bold text-[var(--panel-foreground)]/50 uppercase tracking-[0.2em] mb-3 ml-1">
+                                        Case Files ({results.boards.length})
                                     </h3>
                                     <div className="space-y-2">
                                         {results.boards.map((board) => (
@@ -154,26 +154,33 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean; onCl
                                                 key={board.id}
                                                 href={`/board/${board.id}`}
                                                 onClick={onClose}
-                                                className="block p-3 rounded-lg bg-stone-800/50 hover:bg-stone-800 border border-stone-700/50 hover:border-amber-900/50 transition-all duration-200"
+                                                className="group block p-3 rounded-lg bg-[var(--background)]/50 border border-[var(--panel-border)]/50 hover:bg-[var(--background)] hover:border-[var(--sidebar-accent)]/50 transition-all duration-300"
                                             >
-                                                <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-4">
                                                     {board.thumbnail ? (
-                                                        <img
-                                                            src={board.thumbnail}
-                                                            alt={board.title}
-                                                            className="w-12 h-12 rounded object-cover bg-stone-700"
-                                                        />
+                                                        <div className="relative w-14 h-14 rounded overflow-hidden bg-[var(--panel-background)] border border-[var(--panel-border)]">
+                                                            <Image
+                                                                src={board.thumbnail}
+                                                                alt={board.title}
+                                                                fill
+                                                                className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                                                                unoptimized
+                                                            />
+                                                        </div>
                                                     ) : (
-                                                        <div className="w-12 h-12 rounded bg-stone-700 flex items-center justify-center">
-                                                            <svg className="w-6 h-6 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <div className="w-14 h-14 rounded bg-[var(--panel-background)] border border-[var(--panel-border)] flex items-center justify-center">
+                                                            <svg className="w-6 h-6 text-[var(--panel-foreground)]/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                             </svg>
                                                         </div>
                                                     )}
                                                     <div className="flex-1">
-                                                        <p className="font-medium text-stone-200">{board.title}</p>
+                                                        <p className="font-bold text-[var(--foreground)] font-serif group-hover:text-[var(--sidebar-accent)] transition-colors">{board.title}</p>
                                                         {board.userName && (
-                                                            <p className="text-xs text-stone-500">by {board.userName}</p>
+                                                            <div className="flex items-center gap-1.5 mt-1">
+                                                                <span className="text-[10px] font-bold text-[var(--panel-foreground)]/40 uppercase tracking-tighter">Investigator:</span>
+                                                                <span className="text-xs text-[var(--panel-foreground)]/60">{board.userName}</span>
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </div>
@@ -186,8 +193,8 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean; onCl
                             {/* Users */}
                             {results.users.length > 0 && (
                                 <div>
-                                    <h3 className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">
-                                        Users ({results.users.length})
+                                    <h3 className="text-[10px] font-bold text-[var(--panel-foreground)]/50 uppercase tracking-[0.2em] mb-3 ml-1">
+                                        Bureau Agents ({results.users.length})
                                     </h3>
                                     <div className="space-y-2">
                                         {results.users.map((user) => (
@@ -195,15 +202,15 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean; onCl
                                                 key={user.id}
                                                 href={`/profile/${user.id}`}
                                                 onClick={onClose}
-                                                className="block p-3 rounded-lg bg-stone-800/50 hover:bg-stone-800 border border-stone-700/50 hover:border-amber-900/50 transition-all duration-200"
+                                                className="group block p-3 rounded-lg bg-[var(--background)]/50 border border-[var(--panel-border)]/50 hover:bg-[var(--background)] hover:border-[var(--sidebar-accent)]/50 transition-all duration-300"
                                             >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-600 to-amber-500 flex items-center justify-center text-stone-950 font-bold">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 rounded-full bg-[var(--sidebar-accent)] flex items-center justify-center text-[var(--sidebar-accent-foreground)] font-black text-lg shadow-lg">
                                                         {(user.name || user.email)[0].toUpperCase()}
                                                     </div>
                                                     <div>
-                                                        <p className="font-medium text-stone-200">{user.name || 'Anonymous'}</p>
-                                                        <p className="text-xs text-stone-500">{user.email}</p>
+                                                        <p className="font-bold text-[var(--foreground)] group-hover:text-[var(--sidebar-accent)] transition-colors">{user.name || 'Anonymous'}</p>
+                                                        <p className="text-[10px] font-mono text-[var(--panel-foreground)]/40 uppercase tracking-tighter">{user.email}</p>
                                                     </div>
                                                 </div>
                                             </Link>
@@ -214,8 +221,8 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean; onCl
 
                             {/* No results */}
                             {results.boards.length === 0 && results.users.length === 0 && (
-                                <div className="text-center py-12 text-stone-500">
-                                    <p>No results found for "{query}"</p>
+                                <div className="text-center py-12 text-[var(--panel-foreground)]/40">
+                                    <p className="font-medium">No intel found for &quot;{query}&quot;</p>
                                 </div>
                             )}
                         </div>

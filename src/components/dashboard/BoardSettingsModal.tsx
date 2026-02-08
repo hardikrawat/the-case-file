@@ -34,7 +34,7 @@ export default function BoardSettingsModal({ isOpen, onClose, boardId }: BoardSe
 
     if (!isOpen) return null;
 
-    const handleSave = async (e: any) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
 

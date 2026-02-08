@@ -90,7 +90,7 @@ describe('/api/boards', () => {
         it('should return 401 if not authenticated', async () => {
             vi.mocked(auth).mockResolvedValue(null);
             const req = createRequest();
-            const response = await GET(req) as any;
+            const response = await GET() as any;
             expect(response.status).toBe(401);
         });
 
@@ -98,6 +98,7 @@ describe('/api/boards', () => {
             vi.mocked(auth).mockResolvedValue({ user: { id: 'user-123' } } as any);
             (db.select as any).mockReturnValue({
                 from: vi.fn().mockReturnThis(),
+                leftJoin: vi.fn().mockReturnThis(),
                 where: vi.fn().mockReturnThis(),
                 orderBy: vi.fn().mockResolvedValue([{ id: 'board-1', title: 'Case 1' }]),
             });

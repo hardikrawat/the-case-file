@@ -39,6 +39,7 @@
     "react-dom": "^19.0.0",
     "reactflow": "^11.11.4",
     "sonner": "^1.7.1",
+    "swr": "^2.4.0",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^4.3.6",

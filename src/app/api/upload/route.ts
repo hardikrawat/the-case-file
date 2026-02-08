@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
         // Create upload directory if it doesn't exist
         try {
             await mkdir(UPLOAD_DIR, { recursive: true });
-        } catch (error) {
+        } catch {
             // Directory might already exist
         }
 

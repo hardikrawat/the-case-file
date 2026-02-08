@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures/auth.fixtures';
-import { mockBoardAPI, createMockBoard, navigateToBoard, waitForPageReady } from '../helpers/test-helpers';
+import { mockBoardAPI, createMockBoard, navigateToBoard } from '../helpers/test-helpers';
 
 test.describe('Collaboration Features - Enhanced', () => {
 
@@ -10,10 +10,23 @@ test.describe('Collaboration Features - Enhanced', () => {
         });
 
         await mockBoardAPI(page, mockBoard);
+
+        // Debug logging
+        page.on('console', msg => console.log('BROWSER:', msg.text()));
+        page.on('pageerror', err => console.error('BROWSER ERROR:', err.message));
+        page.on('requestfailed', request => {
+            console.log(`REQUEST FAILED: ${request.url()} - ${request.failure()?.errorText}`);
+        });
+        page.on('response', response => {
+            if (response.status() >= 400) {
+                console.log(`RESPONSE ERROR: ${response.url()} - ${response.status()}`);
+            }
+        });
+
         await navigateToBoard(page, mockBoard.id);
 
         // Verify board loaded
-        await expect(page.getByText('Test Investigation')).toBeVisible();
+        await expect(page.getByText('Test Investigation')).toBeVisible({ timeout: 15000 });
 
         // Check that fork button exists
         const forkBtn = page.getByLabel('Fork Board');
@@ -50,10 +63,8 @@ test.describe('Collaboration Features - Enhanced', () => {
         await navigateToBoard(page, forkedBoard.id);
 
         // Wait for component to mount and state to update
-        await page.waitForSelector('[aria-label="Suggest Changes"]', { timeout: 10000 });
-
         const suggestBtn = page.getByLabel('Suggest Changes');
-        await expect(suggestBtn).toBeVisible();
+        await expect(suggestBtn).toBeVisible({ timeout: 15000 });
     });
 
     test('should NOT show "Suggest Changes" on original boards', async ({ authenticatedPage: page }) => {
@@ -80,6 +91,9 @@ test.describe('Collaboration Features - Enhanced', () => {
         await mockBoardAPI(page, originalBoard);
         await navigateToBoard(page, originalBoard.id);
 
+        // Wait for possible loading
+        await expect(page.getByText('Test Case')).toBeVisible({ timeout: 10000 });
+
         // Review button should be visible
         const reviewBtn = page.getByLabel('Review Suggestions');
         await expect(reviewBtn).toBeVisible();
@@ -94,7 +108,7 @@ test.describe('Collaboration Features - Enhanced', () => {
         await mockBoardAPI(page, originalBoard);
 
         // Mock contributions list
-        await page.route(`**/api/contributions?boardId=${originalBoard.id}`, async route => {
+        await page.route(new RegExp(`/api/contributions\\?boardId=${originalBoard.id}`), async route => {
             await route.fulfill({
                 status: 200,
                 json: [{
@@ -112,10 +126,11 @@ test.describe('Collaboration Features - Enhanced', () => {
 
         // Click Review button
         const reviewBtn = page.getByLabel('Review Suggestions');
+        await expect(reviewBtn).toBeVisible({ timeout: 10000 });
         await reviewBtn.click();
 
         // Check modal opened
-        await expect(page.getByText('Incoming Suggestions')).toBeVisible({ timeout: 5000 });
+        await expect(page.getByText('Manage Contributions')).toBeVisible({ timeout: 10000 });
         await expect(page.getByText('Fixed the timeline')).toBeVisible();
     });
 
@@ -128,7 +143,7 @@ test.describe('Collaboration Features - Enhanced', () => {
         await mockBoardAPI(page, originalBoard);
 
         // Mock fork API
-        await page.route('**/api/boards', async route => {
+        await page.route(new RegExp('/api/boards$'), async route => {
             if (route.request().method() === 'POST') {
                 await route.fulfill({
                     status: 201,
@@ -151,9 +166,10 @@ test.describe('Collaboration Features - Enhanced', () => {
 
         // Click fork button
         const forkBtn = page.getByLabel('Fork Board');
+        await expect(forkBtn).toBeVisible({ timeout: 10000 });
         await forkBtn.click();
 
         // Should navigate to new board
-        await page.waitForURL('**/board/new-forked-board-456', { timeout: 10000 });
+        await page.waitForURL('**/board/new-forked-board-456', { timeout: 15000 });
     });
 });

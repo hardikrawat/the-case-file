@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { Search, Fingerprint } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useUser } from "@/hooks/useUser";
+import { UserBadge } from "./dashboard/UserBadge";
 
 export function DiscoverHeader() {
-    const { data: session, status } = useSession();
-    const isAuthenticated = !!session?.user;
-    const isLoading = status === "loading";
+    const { user, isAuthenticated, isLoading, rank } = useUser();
 
     return (
         <header className="fixed top-0 left-0 right-0 z-50 bg-stone-950/80 backdrop-blur-md border-b border-stone-800">
@@ -32,14 +31,17 @@ export function DiscoverHeader() {
                     {isLoading ? (
                         <div className="px-4 py-2 text-sm text-stone-400">Loading...</div>
                     ) : isAuthenticated ? (
-                        <>
+                        <div className="flex items-center gap-4">
+                            <Link href={`/profile/${user?.id}`}>
+                                <UserBadge user={user} rank={rank} size="sm" showRank={false} />
+                            </Link>
                             <Link
-                                href="/dashboard/discover"
+                                href="/cases"
                                 className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-bold transition-colors"
                             >
-                                Go to Dashboard
+                                Dashboard
                             </Link>
-                        </>
+                        </div>
                     ) : (
                         <>
                             <Link

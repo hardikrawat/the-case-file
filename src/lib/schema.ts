@@ -62,7 +62,7 @@ export const boards = sqliteTable('boards', {
     title: text('title').notNull(),
     parentId: text('parentId'), // ID of the original board if this is a fork
     isPublic: integer('is_public', { mode: 'boolean' }).default(false),
-    content: text('content', { mode: 'json' }).$type<any>().default('{}'), // JSON content
+    content: text('content', { mode: 'json' }).$type<Record<string, unknown>>().default({}), // JSON content
     thumbnail: text('thumbnail'),
     stars: integer('stars').default(0),
     views: integer('views').default(0),
@@ -79,7 +79,7 @@ export const contributions = sqliteTable('contributions', {
     userId: text('userId')
         .notNull()
         .references(() => users.id, { onDelete: 'cascade' }),
-    snapshot: text('snapshot', { mode: 'json' }).$type<any>().notNull(), // The proposed state
+    snapshot: text('snapshot', { mode: 'json' }).$type<Record<string, unknown>>().notNull(), // The proposed state
     message: text('message'),
     status: text('status', { enum: ['open', 'merged', 'rejected'] }).default('open'),
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
@@ -118,7 +118,7 @@ export const comments = sqliteTable('comments', {
         .notNull()
         .references(() => users.id, { onDelete: 'cascade' }),
     content: text('content').notNull(),
-    parentId: text('parent_id').references((): any => comments.id), // For replies
+    parentId: text('parent_id'), // For replies - avoid direct circular reference here if it impacts inference
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
 });
@@ -129,7 +129,7 @@ export const boardVersions = sqliteTable('board_versions', {
     boardId: text('board_id')
         .notNull()
         .references(() => boards.id, { onDelete: 'cascade' }),
-    content: text('content', { mode: 'json' }).$type<any>().notNull(),
+    content: text('content', { mode: 'json' }).$type<Record<string, unknown>>().notNull(),
     createdBy: text('created_by')
         .notNull()
         .references(() => users.id),

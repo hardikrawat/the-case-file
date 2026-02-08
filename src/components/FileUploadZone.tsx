@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { Upload, X, FileImage } from 'lucide-react';
+import Image from 'next/image';
+import { X, FileImage } from 'lucide-react';
 import { toast } from 'sonner';
 import ProgressBar from '@/components/ui/ProgressBar';
 
@@ -20,7 +21,7 @@ export function FileUploadZone({
     const [isUploading, setIsUploading] = useState(false);
     const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
 
-    const handleUpload = async (file: File) => {
+    const handleUpload = useCallback(async (file: File) => {
         if (file.size > maxSize) {
             toast.error(`File too large. Maximum size is ${Math.round(maxSize / 1024 / 1024)}MB`);
             return;
@@ -46,12 +47,12 @@ export function FileUploadZone({
                 const error = await response.json();
                 toast.error(error.error || 'Upload failed');
             }
-        } catch (error) {
+        } catch {
             toast.error('Upload failed. Please try again.');
         } finally {
             setIsUploading(false);
         }
-    };
+    }, [maxSize, onUploadComplete]);
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -61,7 +62,7 @@ export function FileUploadZone({
         if (files.length > 0) {
             handleUpload(files[0]);
         }
-    }, []);
+    }, [handleUpload]);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -83,11 +84,15 @@ export function FileUploadZone({
         <div className="w-full">
             {uploadedUrl ? (
                 <div className="relative group">
-                    <img
-                        src={uploadedUrl}
-                        alt="Uploaded"
-                        className="w-full h-48 object-cover rounded-lg border border-stone-700"
-                    />
+                    <div className="relative w-full h-48 rounded-lg overflow-hidden border border-stone-700">
+                        <Image
+                            src={uploadedUrl}
+                            alt="Uploaded"
+                            fill
+                            className="object-cover"
+                            unoptimized
+                        />
+                    </div>
                     <button
                         onClick={() => {
                             setUploadedUrl(null);

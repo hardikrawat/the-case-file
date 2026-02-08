@@ -52,13 +52,17 @@ export async function PUT(
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        const updated = await db.update(comments)
+        const updated = (await db.update(comments)
             .set({
                 content,
                 updatedAt: new Date(),
             })
             .where(eq(comments.id, params.id))
-            .returning();
+            .returning()) as unknown[];
+
+        if (!updated || updated.length === 0) {
+            return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
+        }
 
         return NextResponse.json(updated[0]);
     } catch (error) {

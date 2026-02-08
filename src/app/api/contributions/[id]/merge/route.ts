@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { boards, contributions } from '@/lib/schema';
 import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
+import { BoardContent } from '@/lib/types';
 
 export async function POST(req: Request, props: { params: Promise<{ id: string }> }) {
     const session = await auth();
@@ -47,8 +48,8 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
         // If unique to Snapshot, Add.
         // If unique to Target, Keep.
 
-        const targetContent = targetBoard.content as any;
-        const snapshotContent = contribution.snapshot as any;
+        const targetContent = targetBoard.content as unknown as BoardContent;
+        const snapshotContent = contribution.snapshot as unknown as BoardContent;
 
         const targetNodes = targetContent.nodes || [];
         const snapshotNodes = snapshotContent.nodes || [];
@@ -57,28 +58,26 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
         const snapshotEdges = snapshotContent.edges || [];
 
         // Create a map of snapshot nodes for O(1) lookup
-        const snapshotNodeMap = new Map(snapshotNodes.map((n: any) => [n.id, n]));
+        const snapshotNodeMap = new Map((snapshotNodes as Record<string, unknown>[]).map((n) => [n.id as string, n]));
 
         // Start with target nodes, but if they exist in snapshot, replace them
-        const mergedNodes = targetNodes.map((n: any) => {
-            if (snapshotNodeMap.has(n.id)) {
-                return snapshotNodeMap.get(n.id);
+        const mergedNodes = (targetNodes as Record<string, unknown>[]).map((n) => {
+            if (snapshotNodeMap.has(n.id as string)) {
+                return snapshotNodeMap.get(n.id as string);
             }
             return n;
         });
 
-        // Add completely new nodes from snapshot
-        const targetNodeIds = new Set(targetNodes.map((n: any) => n.id));
-        snapshotNodes.forEach((n: any) => {
-            if (!targetNodeIds.has(n.id)) {
+        const targetNodeIds = new Set((targetNodes as Record<string, unknown>[]).map((n) => n.id as string));
+        (snapshotNodes as Record<string, unknown>[]).forEach((n) => {
+            if (!targetNodeIds.has(n.id as string)) {
                 mergedNodes.push(n);
             }
         });
 
-        // Simple edge merge for now (concat and dedupe by ID)
-        const allEdges = [...targetEdges, ...snapshotEdges];
+        const allEdges = [...(targetEdges as Record<string, unknown>[]), ...(snapshotEdges as Record<string, unknown>[])];
         const uniqueEdgesMap = new Map();
-        allEdges.forEach((e: any) => uniqueEdgesMap.set(e.id, e));
+        allEdges.forEach((e) => uniqueEdgesMap.set(e.id as string, e));
         const mergedEdges = Array.from(uniqueEdgesMap.values());
 
         const newContent = {

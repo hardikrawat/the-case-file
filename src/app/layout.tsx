@@ -4,6 +4,8 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -21,8 +23,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <div className="noise-overlay" />
         <AuthProvider>
-          {children}
-          <Toaster position="top-center" richColors theme="dark" />
+          <ThemeProvider>
+            {children}
+            <Toaster position="top-center" richColors theme="dark" />
+          </ThemeProvider>
           {/* Global SVG Filters for Detective Board Elements */}
           <svg style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }}>
             <defs>

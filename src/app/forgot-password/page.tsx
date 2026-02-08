@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
 
             setSubmitted(true);
             toast.success('Reset link sent!');
-        } catch (error) {
+        } catch {
             toast.error('An error occurred. Please try again.');
         } finally {
             setIsLoading(false);
@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
                         <h2 className="text-2xl font-bold text-stone-200 mb-2">Check your email</h2>
                         <p className="text-stone-400 mb-6">
                             If an account exists with <span className="text-amber-500 font-medium">{email}</span>,
-                            you'll receive a password reset link shortly.
+                            you&apos;ll receive a password reset link shortly.
                         </p>
                         <Link
                             href="/login"
@@ -78,7 +78,7 @@ export default function ForgotPasswordPage() {
                 <div className="bg-stone-900/50 backdrop-blur-sm border border-amber-900/30 rounded-xl p-8 shadow-2xl">
                     <h2 className="text-2xl font-bold text-stone-200 mb-2">Reset Password</h2>
                     <p className="text-sm text-stone-400 mb-6">
-                        Enter your email address and we'll send you a link to reset your password.
+                        Enter your email address and we&apos;ll send you a link to reset your password.
                     </p>
 
                     <form onSubmit={handleSubmit} className="space-y-4">

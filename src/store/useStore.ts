@@ -25,7 +25,7 @@ type RFState = {
     setTheme: (theme: string) => void;
     activeColor: string;
     setActiveColor: (color: string) => void;
-    updateNodeData: (id: string, data: any) => void;
+    updateNodeData: (id: string, data: unknown) => void;
     setNodes: (nodes: Node[]) => void;
     setEdges: (edges: Edge[]) => void;
     connectMode: boolean;
@@ -37,11 +37,12 @@ type RFState = {
     isPublic: boolean;
     setBoardMetadata: (title: string, isPublic: boolean, parentId: string | null) => void;
     deleteNode: (id: string) => void;
-    updateNode: (id: string, data: any) => void;
+    updateNode: (id: string, data: unknown) => void;
 };
 
 const safeStorage = {
     getItem: (name: string) => {
+        if (typeof window === 'undefined') return null;
         try {
             const data = localStorage.getItem(name);
             return data ? JSON.parse(data) : null;
@@ -50,7 +51,8 @@ const safeStorage = {
             return null;
         }
     },
-    setItem: (name: string, value: any) => {
+    setItem: (name: string, value: unknown) => {
+        if (typeof window === 'undefined') return;
         try {
             localStorage.setItem(name, JSON.stringify(value));
         } catch (e) {
@@ -66,7 +68,10 @@ const safeStorage = {
             }
         }
     },
-    removeItem: (name: string) => localStorage.removeItem(name),
+    removeItem: (name: string) => {
+        if (typeof window === 'undefined') return;
+        localStorage.removeItem(name);
+    },
 };
 
 const useStore = create<RFState>()(
@@ -91,7 +96,7 @@ const useStore = create<RFState>()(
                 set({
                     nodes: get().nodes.map((node) => {
                         if (node.id === id) {
-                            return { ...node, data: { ...node.data, ...data } };
+                            return { ...node, data: Object.assign({}, node.data, data) };
                         }
                         return node;
                     }),
@@ -100,7 +105,7 @@ const useStore = create<RFState>()(
             updateNode: (id, data) => {
                 set({
                     nodes: get().nodes.map((node) =>
-                        node.id === id ? { ...node, data: { ...node.data, ...data } } : node
+                        node.id === id ? { ...node, data: Object.assign({}, node.data, data) } : node
                     ),
                 });
             },
@@ -136,7 +141,7 @@ const useStore = create<RFState>()(
         }),
         {
             name: 'case-file-storage',
-            storage: safeStorage as any,
+            storage: safeStorage as never,
             partialize: (state) => ({
                 nodes: state.nodes,
                 edges: state.edges,

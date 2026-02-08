@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { act } from 'react';
 import useStore from '@/store/useStore';
 
@@ -103,7 +103,7 @@ describe('useStore', () => {
         // Actually applyNodeChanges logic is pure JS usually.
 
         act(() => {
-            useStore.getState().onNodesChange(changes as any);
+            useStore.getState().onNodesChange(changes as NodeChange[]);
         });
 
         expect(useStore.getState().nodes[0].selected).toBe(true);
@@ -116,7 +116,7 @@ describe('useStore', () => {
         const changes = [{ type: 'select', id: 'e1', selected: true }];
 
         act(() => {
-            useStore.getState().onEdgesChange(changes as any);
+            useStore.getState().onEdgesChange(changes as EdgeChange[]);
         });
 
         expect(useStore.getState().edges[0].selected).toBe(true);
@@ -127,7 +127,7 @@ describe('useStore', () => {
         const connection = { source: '1', target: '2' };
 
         act(() => {
-            useStore.getState().onConnect(connection as any);
+            useStore.getState().onConnect(connection as Connection);
         });
 
         expect(useStore.getState().edges).toHaveLength(1);

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { boards, boardCollaborators } from '@/lib/schema';
-import { eq, and } from 'drizzle-orm';
+import { boards } from '@/lib/schema';
+import { eq } from 'drizzle-orm';
 import { auth } from '@/auth';
 
 export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
@@ -37,7 +37,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
         }
 
         // 3. Update Board
-        const updateData: any = {
+        const updateData: Record<string, unknown> = {
             content: content,
             updatedAt: new Date(),
         };

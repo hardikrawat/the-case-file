@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { BaseEdge, EdgeLabelRenderer, EdgeProps, getBezierPath, useReactFlow } from 'reactflow';
+import { BaseEdge, EdgeLabelRenderer, EdgeProps, useReactFlow } from 'reactflow';
 import { X } from 'lucide-react';
 
 const StringEdge = ({
@@ -8,8 +8,6 @@ const StringEdge = ({
     sourceY,
     targetX,
     targetY,
-    sourcePosition,
-    targetPosition,
     style = {},
     markerEnd,
     selected,

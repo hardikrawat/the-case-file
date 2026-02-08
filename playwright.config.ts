@@ -27,6 +27,10 @@ export default defineConfig({
         // Better for debugging
         actionTimeout: 15000,
         navigationTimeout: 30000,
+
+        extraHTTPHeaders: {
+            'x-test-bypass': 'true',
+        },
     },
 
     projects: [
@@ -50,7 +54,7 @@ export default defineConfig({
         url: 'http://localhost:3000',
         reuseExistingServer: !process.env.CI,
         timeout: 120000, // 2 minutes to start server
-        stdout: 'ignore',
+        stdout: 'pipe',
         stderr: 'pipe',
     },
 });

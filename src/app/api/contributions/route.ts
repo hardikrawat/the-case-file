@@ -78,9 +78,36 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const targetBoardId = searchParams.get('boardId');
+    const type = searchParams.get('type'); // 'sent' or 'received' (default)
 
     try {
-        if (targetBoardId) {
+        if (type === 'sent') {
+            // Fetch contributions MADE BY this user
+            const query = db.select().from(contributions).where(eq(contributions.userId, session.user.id));
+
+            if (targetBoardId) {
+                // If boardId is provided, also filter by target board
+                // changing query to use $and or simpler logic if chaining isn't supported directly like this in drizzle without and()
+                // Drizzle select().from().where() returns a QueryBuilder. 
+                // Let's use the `and` operator from drizzle-orm for clarity
+                const { and } = await import('drizzle-orm');
+                const results = await db.select().from(contributions).where(
+                    and(
+                        eq(contributions.userId, session.user.id),
+                        eq(contributions.boardId, targetBoardId)
+                    )
+                );
+                return NextResponse.json(results);
+            }
+
+            // Otherwise return all (or we could default to none if we strictly want board context? 
+            // The user requirement implies "limited to that particular board", so filtering is key. 
+            // But if called without boardId (e.g. from a main dashboard profile page?), we might still want all.
+            // For now, let's keep 'all' if no boardId is strict, but the frontend will pass it.)
+            const results = await query;
+            return NextResponse.json(results);
+        } else if (targetBoardId) {
+            // Fetch contributions TO this board (existing behavior)
             const results = await db.select().from(contributions).where(eq(contributions.boardId, targetBoardId));
             return NextResponse.json(results);
         }

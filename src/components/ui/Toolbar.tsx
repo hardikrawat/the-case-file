@@ -6,10 +6,9 @@ import useStore from '@/store/useStore';
 
 import { Download, Trash2, Link, Upload } from 'lucide-react';
 
-const Toolbar = () => {
-    const setTheme = useStore((state) => state.setTheme);
-    const theme = useStore((state) => state.theme);
+const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
     const addNode = useStore((state) => state.addNode);
+
     const activeColor = useStore((state) => state.activeColor);
     const setActiveColor = useStore((state) => state.setActiveColor);
     const nodes = useStore((state) => state.nodes);
@@ -18,10 +17,11 @@ const Toolbar = () => {
     const setEdges = useStore((state) => state.setEdges);
     const connectMode = useStore((state) => state.connectMode);
     const toggleConnectMode = useStore((state) => state.toggleConnectMode);
-    const { project, getViewport } = useReactFlow();
+    const { project } = useReactFlow();
+
+    if (isReadOnly) return null;
 
     const addSticky = () => {
-        const { x, y, zoom } = getViewport();
         // Default to center-ish if project doesn't work as expected in all contexts
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
@@ -43,7 +43,6 @@ const Toolbar = () => {
     };
 
     const addImage = () => {
-        const { x, y, zoom } = getViewport();
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
         const projected = project({ x: centerX, y: centerY });
@@ -58,7 +57,6 @@ const Toolbar = () => {
     };
 
     const addText = () => {
-        const { x, y, zoom } = getViewport();
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
         const projected = project({ x: centerX, y: centerY });
@@ -73,7 +71,6 @@ const Toolbar = () => {
     };
 
     const addArticle = () => {
-        const { x, y, zoom } = getViewport();
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
         const projected = project({ x: centerX, y: centerY });
@@ -130,7 +127,16 @@ const Toolbar = () => {
         event.target.value = '';
     };
 
+    const theme = useStore((state) => state.theme);
+    const setTheme = useStore((state) => state.setTheme);
+
     const colors = ['#fef3c7', '#fca5a5', '#99f6e4', '#bfdbfe', '#bbf7d0'];
+    const themes = [
+        { id: 'theme-cork', name: 'Cork', color: '#a1887f' },
+        { id: 'theme-noir', name: 'Noir', color: '#0f172a' },
+        { id: 'theme-blueprint', name: 'Blueprint', color: '#1e3a8a' },
+        { id: 'theme-minimal', name: 'Minimal', color: '#f7f1e3' },
+    ];
 
     return (
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm border border-gray-200 p-2 rounded-xl shadow-xl flex gap-2 z-50 pointer-events-auto items-center text-gray-900">
@@ -145,6 +151,19 @@ const Toolbar = () => {
                     />
                 ))}
             </div>
+
+            <div className="flex gap-1 mr-2 border-r border-gray-300 pr-2">
+                {themes.map((t) => (
+                    <button
+                        key={t.id}
+                        onClick={() => setTheme(t.id)}
+                        className={`w-5 h-5 rounded-full border border-gray-300 transition-transform ${theme === t.id ? 'scale-125 border-gray-400 ring-2 ring-offset-1 ring-blue-400' : 'hover:scale-110'}`}
+                        style={{ backgroundColor: t.color }}
+                        title={t.name}
+                    />
+                ))}
+            </div>
+
             <button onClick={addSticky} className="px-4 py-2 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors text-gray-700">Sticky</button>
             <button onClick={addText} className="px-4 py-2 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors text-gray-700">Text</button>
             <button onClick={addImage} className="px-4 py-2 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors text-gray-700">Image</button>
@@ -167,14 +186,7 @@ const Toolbar = () => {
             <button onClick={handleExport} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors" title="Export JSON"><Download size={18} /></button>
             <button onClick={handleClear} className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-colors" title="Clear Board"><Trash2 size={18} /></button>
 
-            <div className="w-px h-6 bg-gray-300 mx-2"></div>
 
-            <div className="flex gap-1">
-                <button onClick={() => setTheme('theme-cork')} className={`w-6 h-6 rounded-full border border-gray-300 bg-[#a1887f] ${theme === 'theme-cork' ? 'ring-2 ring-blue-500' : ''}`} title="Cork Board"></button>
-                <button onClick={() => setTheme('theme-noir')} className={`w-6 h-6 rounded-full border border-gray-300 bg-[#0f172a] ${theme === 'theme-noir' ? 'ring-2 ring-blue-500' : ''}`} title="Noir"></button>
-                <button onClick={() => setTheme('theme-blueprint')} className={`w-6 h-6 rounded-full border border-gray-300 bg-[#1e40af] ${theme === 'theme-blueprint' ? 'ring-2 ring-blue-500' : ''}`} title="Blueprint"></button>
-                <button onClick={() => setTheme('theme-minimal')} className={`w-6 h-6 rounded-full border border-gray-300 bg-[#f7f1e3] ${theme === 'theme-minimal' ? 'ring-2 ring-blue-500' : ''}`} title="Dossier"></button>
-            </div>
         </div>
     );
 };

@@ -10,7 +10,7 @@ export interface ExportOptions {
 /**
  * Export board to JSON
  */
-export async function exportToJSON(boardData: any, filename?: string): Promise<void> {
+export async function exportToJSON(boardData: unknown, filename?: string): Promise<void> {
     const jsonString = JSON.stringify(boardData, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
     saveAs(blob, filename || `board-${Date.now()}.json`);
@@ -61,7 +61,7 @@ export async function exportToPDF(element: HTMLElement, filename?: string): Prom
  */
 export async function exportBoard(
     format: 'json' | 'png' | 'pdf',
-    boardData: any,
+    boardData: unknown,
     element?: HTMLElement,
     filename?: string
 ): Promise<void> {

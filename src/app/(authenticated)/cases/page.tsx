@@ -4,16 +4,18 @@ import { useState, useEffect, useMemo } from "react";
 import { Plus } from "lucide-react";
 import { NewBoardModal } from "@/components/dashboard/NewBoardModal";
 import { DashboardFilters, SortOption, FilterOption } from "@/components/DashboardFilters";
-import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { Board } from "@/lib/types";
+import BoardCard from "@/components/dashboard/BoardCard";
+import DashboardLoading from "@/components/dashboard/DashboardLoading";
 
 export default function DashboardPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [boards, setBoards] = useState<any[]>([]);
+    const [boards, setBoards] = useState<Board[]>([]);
     const [loading, setLoading] = useState(true);
     const [sortBy, setSortBy] = useState<SortOption>('updated');
     const [filterBy, setFilterBy] = useState<FilterOption>('all');
@@ -51,9 +53,13 @@ export default function DashboardPage() {
         // Apply sort
         result.sort((a, b) => {
             if (sortBy === 'updated') {
-                return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+                const dateB = new Date((b.updatedAt as string | number | Date) || 0).getTime();
+                const dateA = new Date((a.updatedAt as string | number | Date) || 0).getTime();
+                return dateB - dateA;
             } else if (sortBy === 'created') {
-                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                const dateB = new Date((b.createdAt as string | number | Date) || 0).getTime();
+                const dateA = new Date((a.createdAt as string | number | Date) || 0).getTime();
+                return dateB - dateA;
             } else if (sortBy === 'name') {
                 return (a.title || '').localeCompare(b.title || '');
             }
@@ -66,12 +72,7 @@ export default function DashboardPage() {
     // Show loading state while checking authentication
     if (status === "loading") {
         return (
-            <div className="flex items-center justify-center h-screen bg-stone-950">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-                    <p className="text-stone-400">Loading...</p>
-                </div>
-            </div>
+            <DashboardLoading status="Authenticating Detective..." />
         );
     }
 
@@ -109,7 +110,7 @@ export default function DashboardPage() {
             </header>
 
             {loading ? (
-                <div className="text-stone-500 animate-pulse">Loading cases...</div>
+                <DashboardLoading status="Retrieving Case Files..." />
             ) : filteredAndSortedBoards.length === 0 ? (
                 <div className="text-center py-20 bg-stone-900/30 rounded-xl border border-stone-800 border-dashed">
                     <p className="text-stone-500 mb-4">
@@ -132,44 +133,7 @@ export default function DashboardPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredAndSortedBoards.map((board) => (
-                        <Link
-                            key={board.id}
-                            href={`/board/${board.id}`}
-                            className="group relative aspect-video bg-stone-900 rounded-xl border border-stone-800 overflow-hidden hover:border-amber-500/50 transition-colors cursor-pointer block"
-                        >
-                            {/* Thumbnail or fallback */}
-                            {board.thumbnail ? (
-                                <img
-                                    src={board.thumbnail}
-                                    alt={board.title}
-                                    className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
-                                />
-                            ) : (
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <svg className="w-20 h-20 text-stone-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                </div>
-                            )}
-
-                            {/* Privacy badge */}
-                            <div className="absolute top-3 right-3">
-                                <span className={`text-xs px-2 py-1 rounded ${board.isPublic
-                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                                    : 'bg-stone-700/80 text-stone-300 border border-stone-600'
-                                    }`}>
-                                    {board.isPublic ? 'Public' : 'Private'}
-                                </span>
-                            </div>
-
-                            {/* Gradient overlay */}
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-4 pt-12">
-                                <h3 className="text-lg font-bold text-stone-200 group-hover:text-amber-500 transition-colors">
-                                    {board.title}
-                                </h3>
-                                <p className="text-xs text-stone-400 mt-1">Last updated {new Date(board.updatedAt).toLocaleDateString()}</p>
-                            </div>
-                        </Link>
+                        <BoardCard key={board.id} board={board} />
                     ))}
                 </div>
             )}

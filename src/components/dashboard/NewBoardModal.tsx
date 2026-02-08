@@ -49,59 +49,53 @@ export function NewBoardModal({ isOpen, onClose }: NewBoardModalProps) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-            <div className="w-full max-w-md bg-stone-900 border border-stone-800 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-stone-800 bg-stone-950">
-                    <h3 className="text-lg font-bold text-stone-100 font-serif">Open New Case File</h3>
-                    <button onClick={onClose} className="text-stone-500 hover:text-stone-300">
+            <div className="w-full max-w-md bg-[var(--panel-background)] border border-[var(--panel-border)] rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 transition-colors duration-500">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--panel-border)]/50 bg-[var(--background)]/50">
+                    <h3 className="text-lg font-bold text-[var(--foreground)] font-serif uppercase tracking-tight">Open New Case File</h3>
+                    <button onClick={onClose} className="text-[var(--panel-foreground)]/40 hover:text-[var(--sidebar-accent)] transition-colors">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-stone-400">Case Title</label>
+                        <label className="text-[10px] font-bold text-[var(--panel-foreground)]/40 uppercase tracking-[0.2em] ml-1">Case Title</label>
                         <input
                             type="text"
                             required
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            placeholder="e.g. The Missing Clock"
-                            className="w-full bg-stone-950 border border-stone-800 rounded-lg px-4 py-2 text-stone-200 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 placeholder:text-stone-700"
+                            placeholder="e.g. The Missing Clock..."
+                            className="w-full bg-[var(--background)] border border-[var(--panel-border)] rounded-lg px-4 py-3 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--sidebar-accent)]/50 focus:border-transparent transition-all placeholder:text-[var(--panel-foreground)]/20"
                             autoFocus
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-stone-400">Visibility</label>
+                        <label className="text-[10px] font-bold text-[var(--panel-foreground)]/40 uppercase tracking-[0.2em] ml-1">Visibility</label>
                         <div className="grid grid-cols-2 gap-4">
-                            <button
-                                type="button"
-                                onClick={() => setIsPublic(false)}
-                                className={`flex flex-col items-center gap-2 p-4 rounded-lg border transition-all ${!isPublic
-                                    ? "bg-stone-800 border-amber-500 text-amber-500"
-                                    : "bg-stone-950 border-stone-800 text-stone-500 hover:bg-stone-900"
-                                    }`}
-                            >
-                                <Lock className="w-6 h-6" />
-                                <span className="text-sm font-medium">Private</span>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setIsPublic(true)}
-                                className={`flex flex-col items-center gap-2 p-4 rounded-lg border transition-all ${isPublic
-                                    ? "bg-stone-800 border-amber-500 text-amber-500"
-                                    : "bg-stone-950 border-stone-800 text-stone-500 hover:bg-stone-900"
-                                    }`}
-                            >
-                                <Globe className="w-6 h-6" />
-                                <span className="text-sm font-medium">Public</span>
-                            </button>
+                            {[
+                                { id: 'private', label: 'Classified', icon: Lock, val: false },
+                                { id: 'public', label: 'Public Intel', icon: Globe, val: true }
+                            ].map((opt) => (
+                                <button
+                                    key={opt.id}
+                                    type="button"
+                                    onClick={() => setIsPublic(opt.val)}
+                                    className={`flex flex-col items-center gap-3 p-4 rounded-lg border transition-all group ${isPublic === opt.val
+                                        ? "bg-[var(--sidebar-accent)]/10 border-[var(--sidebar-accent)] text-[var(--sidebar-accent)] shadow-inner"
+                                        : "bg-[var(--background)]/50 border-[var(--panel-border)] text-[var(--panel-foreground)]/40 hover:border-[var(--sidebar-accent)]/30"
+                                        }`}
+                                >
+                                    <opt.icon className={`w-6 h-6 ${isPublic === opt.val ? "opacity-100" : "opacity-30 group-hover:opacity-60"}`} />
+                                    <span className="text-xs font-bold uppercase tracking-widest">{opt.label}</span>
+                                </button>
+                            ))}
                         </div>
-                        <p className="text-xs text-stone-500 text-center">
+                        <p className="text-[10px] text-[var(--panel-foreground)]/40 text-center font-medium italic mt-2">
                             {isPublic
-                                ? "Visible to everyone in Discovery. Users can contribute."
-                                : "Only you can view and edit this case."}
+                                ? "Broadcast investigation to Bureau discovery files."
+                                : "Encryption active. Only you can access this case."}
                         </p>
                     </div>
 
@@ -109,9 +103,9 @@ export function NewBoardModal({ isOpen, onClose }: NewBoardModalProps) {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-amber-600 hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg transition-colors flex flex-col items-center justify-center gap-2"
+                            className="w-full bg-[var(--sidebar-accent)] hover:bg-[var(--sidebar-accent)]/90 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--sidebar-accent-foreground)] font-bold py-3.5 rounded-lg transition-all shadow-lg shadow-[var(--sidebar-accent)]/20 flex flex-col items-center justify-center gap-2 uppercase tracking-[0.2em] text-xs"
                         >
-                            {loading ? <ProgressBar isIndeterminate label="Initializing Case..." className="max-w-[150px]" /> : "Create Case File"}
+                            {loading ? <ProgressBar isIndeterminate label="Initializing Intelligence..." className="max-w-[150px]" /> : "Initialize Case File"}
                         </button>
                     </div>
                 </form>
