@@ -23,38 +23,43 @@ const TextNode = ({ id, data, selected }: NodeProps) => {
                 isReadOnly ? 'pointer-events-none' : ''
             )}
         >
-            <textarea
-                className={twMerge(
-                    "w-full h-full bg-transparent border-none resize-none focus:outline-none text-xl font-bold text-center leading-tight overflow-hidden",
-                    isReadOnly ? "cursor-default" : ""
-                )}
-                style={{ color: 'var(--foreground)' }}
-                placeholder={isReadOnly ? "" : "Label..."}
-                defaultValue={data.label}
-                onChange={handleChange}
-                onKeyDown={(evt) => evt.stopPropagation()}
-                rows={1}
-                onInput={(e) => {
-                    // Auto-resize
-                    const target = e.target as HTMLTextAreaElement;
-                    target.style.height = 'auto';
-                    target.style.height = target.scrollHeight + 'px';
-                }}
-                readOnly={isReadOnly}
-            />
+            {/* Visual Thumb Tack / Pin */}
+            <div className="thumb-tack" />
 
-            {/* Handles */}
+            <div className="pt-2"> {/* Spacer for tack */}
+                <textarea
+                    className={twMerge(
+                        "w-full h-full bg-transparent border-none resize-none focus:outline-none text-xl font-bold text-center leading-tight overflow-hidden",
+                        isReadOnly ? "cursor-default" : ""
+                    )}
+                    style={{ color: 'var(--foreground)' }}
+                    placeholder={isReadOnly ? "" : "Label..."}
+                    defaultValue={data.label}
+                    onChange={handleChange}
+                    onKeyDown={(evt) => evt.stopPropagation()}
+                    rows={1}
+                    onInput={(e) => {
+                        // Auto-resize
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = 'auto';
+                        target.style.height = target.scrollHeight + 'px';
+                    }}
+                    readOnly={isReadOnly}
+                />
+            </div>
+
+            {/* Handles - pinned to the top center */}
             <Handle
                 type="target"
                 position={Position.Top}
                 id="target"
-                className="opacity-0 w-full h-full top-0 left-0 rounded-none border-none"
+                className="size-3 -top-1 left-1/2 -translate-x-1/2 bg-stone-800 border-none z-50 rounded-full opacity-0 group-hover:opacity-100"
             />
             <Handle
                 type="source"
                 position={Position.Top}
                 id="source"
-                className="opacity-0 w-full h-full top-0 left-0 rounded-none border-none"
+                className="size-3 -top-1 left-1/2 -translate-x-1/2 bg-stone-800 border-none z-50 rounded-full opacity-0 group-hover:opacity-100"
             />
         </div>
     );

@@ -20,47 +20,60 @@ const StickyNoteNode = ({ id, data, selected }: NodeProps) => {
         <div
             style={{
                 transform: `rotate(${rotation}deg)`,
-                backgroundColor: data.color || '#fef3c7',
-                color: '#2d2d2d',
-                fontFamily: '"Architects Daughter", "Marker Felt", "Comic Sans MS", cursive',
-                backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.05) 100%)' // Subtle depth gradient
             }}
             className={twMerge(
-                'relative w-64 h-64 p-6 pt-10 flex flex-col transition-all duration-300 ease-in-out',
-                'sticky-note-paper hand-cut curled-corner',
-                selected ? 'paper-depth-shadow-selected scale-[1.03]' : 'paper-depth-shadow',
+                'relative w-64 h-64 transition-all duration-300 ease-in-out',
+                selected ? 'scale-[1.03]' : '',
                 'group',
                 isReadOnly ? 'pointer-events-none' : ''
             )}
         >
-            {/* Visual Thumb Tack / Pin */}
-            <div className="thumb-tack" />
-
-            {/* Content Area */}
-            <textarea
+            {/* Visual Paper Background (Clipped) */}
+            <div
                 className={twMerge(
-                    "w-full h-full bg-transparent border-none resize-none focus:outline-none text-xl leading-relaxed placeholder-stone-600/30 font-medium",
-                    isReadOnly ? "cursor-default" : ""
+                    "absolute inset-0 w-full h-full sticky-note-paper hand-cut curled-corner",
+                    selected ? 'paper-depth-shadow-selected' : 'paper-depth-shadow',
                 )}
-                placeholder={isReadOnly ? "" : "Pin a clue..."}
-                defaultValue={data.label}
-                onChange={handleChange}
-                onKeyDown={(evt) => evt.stopPropagation()}
-                readOnly={isReadOnly}
+                style={{
+                    backgroundColor: data.color || '#fef3c7',
+                    backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.05) 100%)'
+                }}
             />
 
-            {/* Connection Handles (Pinned center) */}
+            {/* Visual Thumb Tack / Pin - On Wrapper (Top) */}
+            <div className="thumb-tack" />
+
+            {/* Content Area - On Wrapper */}
+            <div className="absolute inset-0 z-10 w-full h-full p-6 pt-10 flex flex-col hand-cut">
+                <textarea
+                    className={twMerge(
+                        "w-full h-full bg-transparent border-none resize-none focus:outline-none text-xl leading-relaxed placeholder-stone-600/30 font-medium",
+                        isReadOnly ? "cursor-default" : ""
+                    )}
+                    style={{
+                        color: '#2d2d2d',
+                        fontFamily: '"Architects Daughter", "Marker Felt", "Comic Sans MS", cursive',
+                    }}
+                    placeholder={isReadOnly ? "" : "Pin a clue..."}
+                    defaultValue={data.label}
+                    onChange={handleChange}
+                    onKeyDown={(evt) => evt.stopPropagation()}
+                    readOnly={isReadOnly}
+                />
+            </div>
+
+            {/* Connection Handles (Pinned center) - On Wrapper (Not Clipped) */}
             <Handle
                 type="target"
                 position={Position.Top}
                 id="target"
-                className="size-3 -top-1 left-1/2 -translate-x-1/2 bg-stone-800 border-none z-20 rounded-full opacity-0 group-hover:opacity-100"
+                className="size-3 -top-1 left-1/2 -translate-x-1/2 bg-stone-800 border-none z-50 rounded-full opacity-0 group-hover:opacity-100"
             />
             <Handle
                 type="source"
                 position={Position.Top}
                 id="source"
-                className="size-3 -top-1 left-1/2 -translate-x-1/2 bg-stone-800 border-none z-20 rounded-full opacity-0 group-hover:opacity-100"
+                className="size-3 -top-1 left-1/2 -translate-x-1/2 bg-stone-800 border-none z-50 rounded-full opacity-0 group-hover:opacity-100"
             />
         </div>
     );
