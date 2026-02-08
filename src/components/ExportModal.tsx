@@ -9,11 +9,11 @@ interface ExportModalProps {
     isOpen: boolean;
     onClose: () => void;
     boardId: string;
-    boardData: any;
+    boardData: Record<string, unknown>;
     boardElement?: HTMLElement;
 }
 
-export function ExportModal({ isOpen, onClose, boardId, boardData, boardElement }: ExportModalProps) {
+export function ExportModal({ isOpen, onClose, boardData, boardElement }: ExportModalProps) {
     const [isExporting, setIsExporting] = useState(false);
     const [format, setFormat] = useState<'json' | 'png' | 'pdf'>('json');
 
@@ -65,8 +65,8 @@ export function ExportModal({ isOpen, onClose, boardId, boardData, boardElement 
                     <button
                         onClick={() => setFormat('json')}
                         className={`w-full p-4 rounded-lg border-2 text-left transition-all ${format === 'json'
-                                ? 'border-amber-500 bg-amber-500/10'
-                                : 'border-stone-700 bg-stone-800/50 hover:border-stone-600'
+                            ? 'border-amber-500 bg-amber-500/10'
+                            : 'border-stone-700 bg-stone-800/50 hover:border-stone-600'
                             }`}
                     >
                         <div className="flex items-start gap-3">
@@ -83,8 +83,8 @@ export function ExportModal({ isOpen, onClose, boardId, boardData, boardElement 
                     <button
                         onClick={() => setFormat('png')}
                         className={`w-full p-4 rounded-lg border-2 text-left transition-all ${format === 'png'
-                                ? 'border-amber-500 bg-amber-500/10'
-                                : 'border-stone-700 bg-stone-800/50 hover:border-stone-600'
+                            ? 'border-amber-500 bg-amber-500/10'
+                            : 'border-stone-700 bg-stone-800/50 hover:border-stone-600'
                             }`}
                     >
                         <div className="flex items-start gap-3">
@@ -101,8 +101,8 @@ export function ExportModal({ isOpen, onClose, boardId, boardData, boardElement 
                     <button
                         onClick={() => setFormat('pdf')}
                         className={`w-full p-4 rounded-lg border-2 text-left transition-all ${format === 'pdf'
-                                ? 'border-amber-500 bg-amber-500/10'
-                                : 'border-stone-700 bg-stone-800/50 hover:border-stone-600'
+                            ? 'border-amber-500 bg-amber-500/10'
+                            : 'border-stone-700 bg-stone-800/50 hover:border-stone-600'
                             }`}
                     >
                         <div className="flex items-start gap-3">

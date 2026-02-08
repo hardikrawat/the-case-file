@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import Board from '@/components/Board';
-import useStore from '@/store/useStore';
 
 // Mock next-auth
 vi.mock('next-auth/react', () => ({
@@ -9,25 +8,25 @@ vi.mock('next-auth/react', () => ({
         data: { user: { id: 'test-user', name: 'Test User' } },
         status: 'authenticated',
     })),
-    SessionProvider: ({ children }: any) => <div>{children}</div>,
+    SessionProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 // Mock ReactFlow
 vi.mock('reactflow', async () => {
     return {
-        default: ({ children }: any) => <div data-testid="react-flow">{children}</div>,
+        default: ({ children }: { children: React.ReactNode }) => <div data-testid="react-flow">{children}</div>,
         Background: () => <div data-testid="background" />,
         Controls: () => <div data-testid="controls" />,
         MiniMap: () => <div data-testid="minimap" />,
-        Panel: ({ children }: any) => <div data-testid="panel">{children}</div>,
-        useNodesState: (initial: any) => [initial, vi.fn(), vi.fn()],
-        useEdgesState: (initial: any) => [initial, vi.fn(), vi.fn()],
+        Panel: ({ children }: { children: React.ReactNode }) => <div data-testid="panel">{children}</div>,
+        useNodesState: (initial: unknown) => [initial, vi.fn(), vi.fn()],
+        useEdgesState: (initial: unknown) => [initial, vi.fn(), vi.fn()],
         addEdge: vi.fn(),
         useReactFlow: () => ({
             project: vi.fn(),
             getNodes: vi.fn().mockReturnValue([]),
         }),
-        ReactFlowProvider: ({ children }: any) => <div>{children}</div>,
+        ReactFlowProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
         MarkerType: { ArrowClosed: 'arrowclosed' },
         BackgroundVariant: { Dots: 'dots', Lines: 'lines', Cross: 'cross' },
     };

@@ -25,11 +25,13 @@ export async function GET() {
         }
 
         // Return user data along with reputation stats
+        const rep = user.reputation as unknown as { points: number; boardsCreated: number; contributionsAccepted: number } | null;
+
         return NextResponse.json({
             ...user,
-            reputationPoints: user.reputation?.points || 0,
-            boardsCreated: user.reputation?.boardsCreated || 0,
-            contributionsAccepted: user.reputation?.contributionsAccepted || 0,
+            reputationPoints: rep?.points || 0,
+            boardsCreated: rep?.boardsCreated || 0,
+            contributionsAccepted: rep?.contributionsAccepted || 0,
         });
 
     } catch (error) {

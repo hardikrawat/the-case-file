@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
 
         const { boardId, nodeId, content, parentId } = validationResult.data;
 
-        const newComment = await db.insert(comments).values({
+        const newComment = (await db.insert(comments).values({
             id: createId(),
             boardId,
             nodeId: nodeId || null,
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
             parentId: parentId || null,
             createdAt: new Date(),
             updatedAt: new Date(),
-        }).returning();
+        }).returning()) as unknown[];
 
         return NextResponse.json(newComment[0], { status: 201 });
     } catch (error) {

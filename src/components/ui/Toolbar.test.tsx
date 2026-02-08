@@ -151,19 +151,19 @@ describe('Toolbar Component', () => {
             // Mock FileReader
             const mockFileReader = {
                 readAsText: vi.fn(),
-                onload: null as any,
+                onload: null as ((this: FileReader, ev: ProgressEvent<FileReader>) => void) | null,
                 result: '{"nodes":[{"id":"1"}], "edges":[]}'
             };
 
             // Spy on window.FileReader
-            const fileReaderSpy = vi.spyOn(window, 'FileReader').mockImplementation(() => mockFileReader as any);
+            vi.spyOn(window, 'FileReader').mockImplementation(() => mockFileReader as unknown as FileReader);
 
             const file = new File(['{"nodes":[{"id":"1"}], "edges":[]}'], 'test.json', { type: 'application/json' });
             fireEvent.change(input!, { target: { files: [file] } });
 
             // Trigger onload manually since mock doesn't do it
             if (mockFileReader.onload) {
-                mockFileReader.onload({ target: { result: mockFileReader.result } } as any);
+                mockFileReader.onload({ target: { result: mockFileReader.result } } as unknown as ProgressEvent<FileReader>);
             }
 
             expect(mockFileReader.readAsText).toHaveBeenCalledWith(file);

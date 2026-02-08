@@ -54,7 +54,7 @@ export default function LoginPage() {
                 toast.success('Access Granted. Welcome back, Detective.');
                 router.push('/dashboard');
             }
-        } catch (error) {
+        } catch {
             toast.error('System malfuction. Try again.');
         } finally {
             setIsLoading(false);
@@ -65,7 +65,7 @@ export default function LoginPage() {
         setIsLoading(true);
         try {
             await signIn(provider, { callbackUrl: '/dashboard' });
-        } catch (error) {
+        } catch {
             toast.error(`Failed to authorize via ${provider}`);
             setIsLoading(false);
         }
@@ -207,7 +207,7 @@ export default function LoginPage() {
                 {/* Back to Home */}
                 <div className="text-center mt-8">
                     <Link href="/" className="text-xs font-mono text-stone-600 hover:text-stone-400 transition">
-                        // ABORT AND RETURN TO HOME
+                        {/* ABORT AND RETURN TO HOME */}
                     </Link>
                 </div>
             </div>

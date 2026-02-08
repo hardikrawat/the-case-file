@@ -5,6 +5,23 @@ import { boards } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
 
 export default async function DiscoverPage() {
+  // If we are in a build environment without DB credentials, return empty array to prevent build failure
+  if (!process.env.TURSO_DATABASE_URL) {
+    return (
+      <div className="text-stone-100 font-sans">
+        <div className="max-w-6xl mx-auto py-4">
+          {/* Feed */}
+          <div className="space-y-12">
+            {/* Hero Section */}
+            <div className="col-span-2 text-center text-stone-500 py-10">
+              Database credentials not found. Build mode.
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const publicBoards = await db.query.boards.findMany({
     where: eq(boards.isPublic, true),
     orderBy: [desc(boards.createdAt)],

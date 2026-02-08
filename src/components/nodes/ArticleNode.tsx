@@ -1,4 +1,5 @@
 import React, { memo, useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { twMerge } from 'tailwind-merge';
 import { Globe, ExternalLink } from 'lucide-react';
@@ -36,7 +37,6 @@ const ArticleNode = ({ id, data, selected }: NodeProps) => {
         }
     }, [id, data.title, updateNodeData]);
 
-    // Initialize/Refetch if URL changes externally (or during rehydration)
     useEffect(() => {
         if (data.url && !data.image && !isLoading) {
             fetchPreview(data.url);
@@ -48,7 +48,7 @@ const ArticleNode = ({ id, data, selected }: NodeProps) => {
         if (data.url && data.url !== urlInput) {
             setUrlInput(data.url);
         }
-    }, [data.url]);
+    }, [data.url, urlInput]);
 
     // Debounce URL input
     useEffect(() => {
@@ -105,14 +105,15 @@ const ArticleNode = ({ id, data, selected }: NodeProps) => {
                     {isLoading ? (
                         <ProgressBar isIndeterminate label="Extracting..." className="max-w-[120px]" />
                     ) : data.image ? (
-                        <img
-                            src={data.image}
-                            alt={data.title}
-                            className="w-full h-full object-cover newsprint-image opacity-80"
-                            onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                        />
+                        <div className="relative w-full h-full newsprint-image opacity-80">
+                            <Image
+                                src={data.image}
+                                alt={data.title}
+                                fill
+                                className="object-cover"
+                                unoptimized
+                            />
+                        </div>
                     ) : (
                         <Globe className="text-stone-400 opacity-30" size={48} />
                     )}

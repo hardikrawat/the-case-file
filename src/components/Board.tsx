@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useEffect, type MouseEvent } from 'react';
+import React, { useMemo, useState, useEffect, useCallback, type MouseEvent } from 'react';
 import ReactFlow, {
     Background,
     Controls,
@@ -8,9 +8,8 @@ import ReactFlow, {
     BackgroundVariant,
     addEdge,
     Node,
-    Connection,
 } from 'reactflow';
-import { useShallow } from 'zustand/react/shallow';
+
 import 'reactflow/dist/style.css';
 import { useParams, useRouter } from 'next/navigation';
 import { Save, Settings, Share2, Check, GitFork, GitPullRequest, RefreshCcw, Eye } from 'lucide-react';
@@ -90,7 +89,7 @@ const Board = () => {
         []
     );
 
-    const fetchBoard = async () => {
+    const fetchBoard = useCallback(async () => {
         setIsBoardLoading(true);
         try {
             const res = await fetch(`/api/boards/${boardId}`);
@@ -108,7 +107,7 @@ const Board = () => {
                     const contribRes = await fetch(`/api/contributions?boardId=${boardId}`);
                     if (contribRes.ok) {
                         const contribs = await contribRes.json();
-                        setPendingContributionCount(contribs.filter((c: any) => c.status === 'open').length);
+                        setPendingContributionCount((contribs as Record<string, unknown>[]).filter((c) => c.status === 'open').length);
                     }
                 }
             }
@@ -118,13 +117,13 @@ const Board = () => {
             // Slight delay for aesthetic effect / smooth transition
             setTimeout(() => setIsBoardLoading(false), 800);
         }
-    };
+    }, [boardId, session?.user?.id, setNodes, setEdges, setBoardMetadata]);
 
     useEffect(() => {
         if (boardId) {
             fetchBoard();
         }
-    }, [boardId]);
+    }, [boardId, fetchBoard]);
 
     const onNodeClick = (event: MouseEvent, node: Node) => {
         if (!connectMode) return;

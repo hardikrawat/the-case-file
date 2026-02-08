@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { FileUploadZone } from '@/components/FileUploadZone';
-import { awardPoints } from '@/lib/reputation';
+
 
 // Example integration component showing file upload with reputation
 export function ProfileAvatarUpload({ userId }: { userId: string }) {
@@ -40,7 +40,7 @@ export function ProfileAvatarUpload({ userId }: { userId: string }) {
 }
 
 // Edge customization panel
-export function EdgeCustomizationPanel({ onStyleChange }: { onStyleChange: (style: any) => void }) {
+export function EdgeCustomizationPanel({ onStyleChange }: { onStyleChange: (style: unknown) => void }) {
     const [edgeType, setEdgeType] = useState('default');
     const [edgeLabel, setEdgeLabel] = useState('');
     const [edgeColor, setEdgeColor] = useState('#78716c');

@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+
 
 interface SearchResult {
     boards: Array<{
@@ -19,7 +20,6 @@ interface SearchResult {
 }
 
 export default function SearchModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-    const router = useRouter();
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<SearchResult | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -158,11 +158,15 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean; onCl
                                             >
                                                 <div className="flex items-center gap-3">
                                                     {board.thumbnail ? (
-                                                        <img
-                                                            src={board.thumbnail}
-                                                            alt={board.title}
-                                                            className="w-12 h-12 rounded object-cover bg-stone-700"
-                                                        />
+                                                        <div className="relative w-12 h-12 rounded overflow-hidden bg-stone-700">
+                                                            <Image
+                                                                src={board.thumbnail}
+                                                                alt={board.title}
+                                                                fill
+                                                                className="object-cover"
+                                                                unoptimized
+                                                            />
+                                                        </div>
                                                     ) : (
                                                         <div className="w-12 h-12 rounded bg-stone-700 flex items-center justify-center">
                                                             <svg className="w-6 h-6 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -215,7 +219,7 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean; onCl
                             {/* No results */}
                             {results.boards.length === 0 && results.users.length === 0 && (
                                 <div className="text-center py-12 text-stone-500">
-                                    <p>No results found for "{query}"</p>
+                                    <p>No results found for &quot;{query}&quot;</p>
                                 </div>
                             )}
                         </div>

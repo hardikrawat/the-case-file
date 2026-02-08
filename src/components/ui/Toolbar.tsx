@@ -19,12 +19,11 @@ const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
     const setEdges = useStore((state) => state.setEdges);
     const connectMode = useStore((state) => state.connectMode);
     const toggleConnectMode = useStore((state) => state.toggleConnectMode);
-    const { project, getViewport } = useReactFlow();
+    const { project } = useReactFlow();
 
     if (isReadOnly) return null;
 
     const addSticky = () => {
-        const { x, y, zoom } = getViewport();
         // Default to center-ish if project doesn't work as expected in all contexts
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
@@ -46,7 +45,6 @@ const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
     };
 
     const addImage = () => {
-        const { x, y, zoom } = getViewport();
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
         const projected = project({ x: centerX, y: centerY });
@@ -61,7 +59,6 @@ const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
     };
 
     const addText = () => {
-        const { x, y, zoom } = getViewport();
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
         const projected = project({ x: centerX, y: centerY });
@@ -76,7 +73,6 @@ const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
     };
 
     const addArticle = () => {
-        const { x, y, zoom } = getViewport();
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
         const projected = project({ x: centerX, y: centerY });

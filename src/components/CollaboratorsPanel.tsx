@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Users, X, Plus, Shield, Eye, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -58,7 +58,7 @@ export function CollaboratorsPanel({ boardId, isOwner }: CollaboratorsProps) {
                 const error = await response.json();
                 toast.error(error.error || 'Failed to add collaborator');
             }
-        } catch (error) {
+        } catch {
             toast.error('An error occurred');
         }
     };
@@ -75,7 +75,7 @@ export function CollaboratorsPanel({ boardId, isOwner }: CollaboratorsProps) {
                 toast.success('Collaborator removed');
                 await loadCollaborators();
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to remove collaborator');
         }
     };

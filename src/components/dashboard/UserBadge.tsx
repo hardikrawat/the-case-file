@@ -1,5 +1,6 @@
 
 import { UserProfile } from "@/hooks/useUser";
+import Image from "next/image";
 import { twMerge } from "tailwind-merge";
 
 interface UserBadgeProps {
@@ -27,7 +28,7 @@ export function UserBadge({
         lg: "w-16 h-16 text-base",
     };
 
-    const avatarSize = size === 'lg' ? 64 : size === 'md' ? 40 : 32;
+
 
     return (
         <div className={twMerge("flex items-center gap-3", className)}>
@@ -39,11 +40,15 @@ export function UserBadge({
                     sizeClasses[size].split(' ')[1]
                 )}>
                     {user.image || user.avatarUrl ? (
-                        <img
-                            src={user.image || user.avatarUrl || ''}
-                            alt={user.name || "Agent"}
-                            className="w-full h-full object-cover grayscale contrast-125 sepia-[.3]"
-                        />
+                        <div className="relative w-full h-full grayscale contrast-125 sepia-[.3]">
+                            <Image
+                                src={user.image || user.avatarUrl || ''}
+                                alt={user.name || "Agent"}
+                                fill
+                                className="object-cover"
+                                unoptimized
+                            />
+                        </div>
                     ) : (
                         <div className="w-full h-full flex items-center justify-center bg-stone-900 text-stone-500 font-bold font-mono">
                             {(user.name?.[0] || "A").toUpperCase()}

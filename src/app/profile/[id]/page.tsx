@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useUser } from '@/hooks/useUser';
-import { UserBadge } from '@/components/dashboard/UserBadge';
 
 interface UserProfile {
     id: string;
@@ -21,7 +21,7 @@ interface UserProfile {
 
 export default function ProfilePage() {
     const params = useParams();
-    const { user: currentUser, rank: currentRank } = useUser();
+    const { user: currentUser } = useUser();
 
     // We fetch the profile data for the ID in the URL
     // If it's the current user, we could theoretically use `currentUser`, but fetching ensures we get the public view data structure
@@ -34,11 +34,7 @@ export default function ProfilePage() {
 
     // Use current user data for live updates if it's their own profile
     // But we still need the base fetch for boardsCount etc if not in /me
-    useEffect(() => {
-        loadProfile();
-    }, [params.id]);
-
-    const loadProfile = async () => {
+    const loadProfile = useCallback(async () => {
         try {
             const response = await fetch(`/api/profile/${params.id}`);
             const data = await response.json();
@@ -51,12 +47,18 @@ export default function ProfilePage() {
                     avatarUrl: data.avatarUrl || data.image || ''
                 });
             }
-        } catch (error) {
-            console.error('Failed to load profile:', error);
+        } catch (_error) {
+            console.error('Failed to load profile:', _error);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [params.id]);
+
+    // Use current user data for live updates if it's their own profile
+    // But we still need the base fetch for boardsCount etc if not in /me
+    useEffect(() => {
+        loadProfile();
+    }, [loadProfile]);
 
     const handleSave = async () => {
         setIsLoading(true);
@@ -74,7 +76,7 @@ export default function ProfilePage() {
             } else {
                 toast.error('Failed to update dossier');
             }
-        } catch (error) {
+        } catch {
             toast.error('An error occurred');
         } finally {
             setIsLoading(false);
@@ -154,11 +156,15 @@ export default function ProfilePage() {
                                 <div className="bg-white p-4 pb-12 shadow-md border border-stone-200 w-64">
                                     {profile.avatarUrl || profile.image ? (
                                         <div className="w-full h-56 bg-stone-800 overflow-hidden grayscale contrast-125 sepia-[.2]">
-                                            <img
-                                                src={profile.avatarUrl || profile.image || ''}
-                                                alt="Subject"
-                                                className="w-full h-full object-cover"
-                                            />
+                                            <div className="relative w-full h-full">
+                                                <Image
+                                                    src={profile.avatarUrl || profile.image || ''}
+                                                    alt="Subject"
+                                                    fill
+                                                    className="object-cover"
+                                                    unoptimized
+                                                />
+                                            </div>
                                         </div>
                                     ) : (
                                         <div className="w-full h-56 bg-stone-200 flex items-center justify-center text-stone-400 font-mono text-4xl">

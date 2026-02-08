@@ -68,7 +68,7 @@ export default function SignupPage() {
 
             if (!response.ok) {
                 if (data.details && Array.isArray(data.details)) {
-                    data.details.forEach((err: any) => {
+                    data.details.forEach((err: { message: string }) => {
                         toast.error(`${err.message}`);
                     });
                 } else {
@@ -79,7 +79,7 @@ export default function SignupPage() {
 
             toast.success('Agent registered. Verification required.');
             router.push(`/signup/verify?email=${encodeURIComponent(formData.email)}&token=${data.verificationToken}`);
-        } catch (error) {
+        } catch {
             toast.error('System error. Contact HQ.');
         } finally {
             setIsLoading(false);
@@ -90,7 +90,7 @@ export default function SignupPage() {
         setIsLoading(true);
         try {
             await signIn(provider, { callbackUrl: '/dashboard' });
-        } catch (error) {
+        } catch {
             toast.error(`Auth failure: ${provider}`);
             setIsLoading(false);
         }
@@ -268,7 +268,7 @@ export default function SignupPage() {
                 {/* Back to Home */}
                 <div className="text-center mt-8">
                     <Link href="/" className="text-xs font-mono text-stone-600 hover:text-stone-400 transition">
-                        // ABORT AND RETURN TO HOME
+                        {/* ABORT AND RETURN TO HOME */}
                     </Link>
                 </div>
             </div>

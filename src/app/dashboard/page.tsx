@@ -7,13 +7,15 @@ import { DashboardFilters, SortOption, FilterOption } from "@/components/Dashboa
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { Board } from "@/lib/types";
+import Image from "next/image";
 
 export default function DashboardPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [boards, setBoards] = useState<any[]>([]);
+    const [boards, setBoards] = useState<Board[]>([]);
     const [loading, setLoading] = useState(true);
     const [sortBy, setSortBy] = useState<SortOption>('updated');
     const [filterBy, setFilterBy] = useState<FilterOption>('all');
@@ -51,9 +53,13 @@ export default function DashboardPage() {
         // Apply sort
         result.sort((a, b) => {
             if (sortBy === 'updated') {
-                return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+                const dateB = new Date((b.updatedAt as string | number | Date) || 0).getTime();
+                const dateA = new Date((a.updatedAt as string | number | Date) || 0).getTime();
+                return dateB - dateA;
             } else if (sortBy === 'created') {
-                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                const dateB = new Date((b.createdAt as string | number | Date) || 0).getTime();
+                const dateA = new Date((a.createdAt as string | number | Date) || 0).getTime();
+                return dateB - dateA;
             } else if (sortBy === 'name') {
                 return (a.title || '').localeCompare(b.title || '');
             }
@@ -139,10 +145,12 @@ export default function DashboardPage() {
                         >
                             {/* Thumbnail or fallback */}
                             {board.thumbnail ? (
-                                <img
+                                <Image
                                     src={board.thumbnail}
                                     alt={board.title}
+                                    fill
                                     className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
+                                    unoptimized
                                 />
                             ) : (
                                 <div className="absolute inset-0 flex items-center justify-center">
@@ -167,7 +175,7 @@ export default function DashboardPage() {
                                 <h3 className="text-lg font-bold text-stone-200 group-hover:text-amber-500 transition-colors">
                                     {board.title}
                                 </h3>
-                                <p className="text-xs text-stone-400 mt-1">Last updated {new Date(board.updatedAt).toLocaleDateString()}</p>
+                                <p className="text-xs text-stone-400 mt-1">Last updated {new Date(board.updatedAt || 0).toLocaleDateString()}</p>
                             </div>
                         </Link>
                     ))}

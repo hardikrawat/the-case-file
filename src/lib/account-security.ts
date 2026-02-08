@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { rateLimits } from '@/lib/schema';
-import { eq, lt } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 /**
  * Track failed login attempts and implement account lockout

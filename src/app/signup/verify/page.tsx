@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -25,7 +25,7 @@ function VerifyInstructionsContent() {
             } else {
                 toast.error(data.error || 'Verification failed');
             }
-        } catch (error) {
+        } catch {
             toast.error('An error occurred during verification');
         } finally {
             setIsVerifying(false);
@@ -51,7 +51,7 @@ function VerifyInstructionsContent() {
 
                     <h2 className="text-2xl font-bold text-stone-200 mb-4">Check Your Email</h2>
                     <p className="text-stone-400 mb-8">
-                        We've sent a verification link to <span className="text-amber-500 font-medium">{email || 'your email'}</span>.
+                        We&apos;ve sent a verification link to <span className="text-amber-500 font-medium">{email || 'your email'}</span>.
                         Please click the link to verify your account and start your investigation.
                     </p>
 

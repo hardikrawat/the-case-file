@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
-import ReactFlow, { Background, BackgroundVariant } from 'reactflow';
+import React, { useEffect, useState } from 'react';
+import ReactFlow, { Background, BackgroundVariant, Node as FlowNode, Edge as FlowEdge } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { X, Check, Eye, ArrowLeft, GitMerge } from 'lucide-react';
 import StickyNoteNode from '@/components/nodes/StickyNoteNode';
@@ -16,7 +16,7 @@ interface Contribution {
     message: string;
     createdAt: string;
     status: 'open' | 'merged' | 'rejected';
-    snapshot: any;
+    snapshot: Record<string, unknown>;
 }
 
 interface ContributionModalProps {
@@ -71,7 +71,7 @@ export default function ContributionModal({ isOpen, onClose, boardId, onMergeSuc
                 .catch(err => console.error(err))
                 .finally(() => setLoading(false));
         }
-    }, [isOpen, activeTab]);
+    }, [isOpen, activeTab, boardId]);
 
     const handleAccept = async (id: string) => {
         try {
@@ -161,8 +161,8 @@ export default function ContributionModal({ isOpen, onClose, boardId, onMergeSuc
                     </div>
                     <div className="flex-1 relative bg-stone-950">
                         <ReactFlow
-                            nodes={previewContribution.snapshot?.nodes || []}
-                            edges={previewContribution.snapshot?.edges || []}
+                            nodes={(previewContribution.snapshot as unknown as { nodes: FlowNode[] })?.nodes || []}
+                            edges={(previewContribution.snapshot as unknown as { edges: FlowEdge[] })?.edges || []}
                             nodeTypes={{ sticky: StickyNoteNode, image: ImageNode, text: TextNode, article: ArticleNode }}
                             fitView
                             proOptions={{ hideAttribution: true }}
@@ -171,7 +171,7 @@ export default function ContributionModal({ isOpen, onClose, boardId, onMergeSuc
                         </ReactFlow>
                         <div className="absolute bottom-4 left-4 bg-black/50 p-4 rounded text-stone-300 text-sm max-w-md pointer-events-none">
                             <p className="font-bold mb-1">Message:</p>
-                            <p>"{previewContribution.message}"</p>
+                            <p>&quot;{previewContribution.message}&quot;</p>
                         </div>
                     </div>
                 </div>
@@ -231,7 +231,7 @@ export default function ContributionModal({ isOpen, onClose, boardId, onMergeSuc
                         <div className="text-center text-stone-500 py-8">Loading...</div>
                     ) : activeTab === 'my_contributions' ? (
                         outgoingContributions.length === 0 ? (
-                            <div className="text-center text-stone-500 py-8">You haven't made any contributions yet.</div>
+                            <div className="text-center text-stone-500 py-8">You haven&apos;t made any contributions yet.</div>
                         ) : (
                             <div className="space-y-3">
                                 {outgoingContributions.map((c) => (
@@ -246,7 +246,7 @@ export default function ContributionModal({ isOpen, onClose, boardId, onMergeSuc
                                                 </span>
                                                 <span className="text-[10px] text-stone-500">{new Date(c.createdAt).toLocaleDateString()}</span>
                                             </div>
-                                            <p className="text-stone-300 text-sm">"{c.message}"</p>
+                                            <p className="text-stone-300 text-sm">&quot;{c.message}&quot;</p>
                                         </div>
                                         <button onClick={() => setPreviewContribution(c)} className="p-1.5 bg-stone-700 hover:bg-stone-600 rounded text-stone-300 transition" title="View">
                                             <Eye className="w-3.5 h-3.5" />
@@ -304,7 +304,7 @@ export default function ContributionModal({ isOpen, onClose, boardId, onMergeSuc
                                                 )}
                                             </div>
                                         </div>
-                                        <p className="text-stone-400 text-sm italic">"{c.message}"</p>
+                                        <p className="text-stone-400 text-sm italic">&quot;{c.message}&quot;</p>
                                     </div>
                                 ))}
                             </div>

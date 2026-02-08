@@ -41,7 +41,12 @@ export function getEdgeStyleAttributes(style: EdgeStyle): {
     const color = style.color || '#78716c';
     const width = style.width || 2;
 
-    const attrs: any = {
+    const attrs: {
+        stroke: string;
+        strokeWidth: number;
+        strokeDasharray?: string;
+        markerEnd?: string;
+    } = {
         stroke: color,
         strokeWidth: width,
     };
@@ -78,7 +83,6 @@ export function calculateEdgePath(
     curvature: number = 0.2
 ): string {
     const dx = x2 - x1;
-    const dy = y2 - y1;
 
     // Calculate control points for smooth curve
     const cx1 = x1 + dx * curvature;
@@ -115,7 +119,7 @@ export function renderEdge(
     style: EdgeStyle
 ): {
     path: string;
-    attributes: any;
+    attributes: Record<string, string | number | undefined>;
     label?: { x: number; y: number; text: string };
 } {
     const path = calculateEdgePath(x1, y1, x2, y2);

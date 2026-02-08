@@ -8,7 +8,7 @@ export default function NotFound() {
                     <h1 className="text-9xl font-bold text-amber-500/20 font-serif">404</h1>
                     <h2 className="text-3xl font-bold text-stone-200 mt-4 mb-2">Case Not Found</h2>
                     <p className="text-stone-400 text-lg">
-                        This investigation has gone cold. The evidence you're looking for doesn't exist.
+                        This investigation has gone cold. The evidence you&apos;re looking for doesn&apos;t exist.
                     </p>
                 </div>
 

@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
+import Image from 'next/image';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { twMerge } from 'tailwind-merge';
-import { Image as ImageIcon, Upload } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import useStore from '@/store/useStore';
 
 const ImageNode = ({ id, data, selected }: NodeProps) => {
@@ -54,7 +55,15 @@ const ImageNode = ({ id, data, selected }: NodeProps) => {
             {/* Image Area */}
             <div className="w-full aspect-square bg-stone-200 flex items-center justify-center overflow-hidden relative border border-black/5 evidence-photo">
                 {data.src ? (
-                    <img src={data.src} alt="Evidence" className="w-full h-full object-cover pointer-events-none opacity-90" />
+                    <div className="relative w-full h-full opacity-90">
+                        <Image
+                            src={data.src}
+                            alt="Evidence"
+                            fill
+                            className="object-cover pointer-events-none"
+                            unoptimized
+                        />
+                    </div>
                 ) : (
                     <label className={twMerge(
                         "flex flex-col items-center gap-2 text-stone-400 transition-colors w-full h-full justify-center",

@@ -1,11 +1,28 @@
 import Link from "next/link";
-import { Search, Flame, Clock, Award, Fingerprint } from "lucide-react";
+import { Flame, Clock, Award } from "lucide-react";
 import { db } from "@/lib/db";
 import { boards, userReputation } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
 import { DiscoverHeader } from "@/components/DiscoverHeader";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+
+interface Board {
+  id: string;
+  title: string;
+  isPublic: boolean | null;
+  createdAt: Date | string | null;
+  thumbnail?: string | null;
+}
+
+interface Detective {
+  userId: string;
+  points: number | null;
+  user: {
+    name: string | null;
+    image?: string | null;
+  }
+}
 
 export default async function DiscoverPage() {
   const session = await auth();
@@ -14,22 +31,28 @@ export default async function DiscoverPage() {
   if (session?.user) {
     redirect("/dashboard/discover");
   }
-  const publicBoards = await db.query.boards.findMany({
-    where: eq(boards.isPublic, true),
-    orderBy: [desc(boards.createdAt)],
-    limit: 10,
-    with: {
-      // ideally we would want user info here but simplified for now
-    }
-  });
+  let publicBoards: Board[] = [];
+  let topDetectives: Detective[] = [];
 
-  const topDetectives = await db.query.userReputation.findMany({
-    orderBy: [desc(userReputation.points)],
-    limit: 5,
-    with: {
-      user: true
-    }
-  });
+  // Only query DB if credentials exist or in test environment
+  if (process.env.TURSO_DATABASE_URL || process.env.NODE_ENV === 'test') {
+    publicBoards = await db.query.boards.findMany({
+      where: eq(boards.isPublic, true),
+      orderBy: [desc(boards.createdAt)],
+      limit: 10,
+      with: {
+        // ideally we would want user info here but simplified for now
+      }
+    });
+
+    topDetectives = (await db.query.userReputation.findMany({
+      orderBy: [desc(userReputation.points)],
+      limit: 5,
+      with: {
+        user: true
+      }
+    })) as unknown as Detective[];
+  }
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 font-sans">
