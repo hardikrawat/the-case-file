@@ -243,18 +243,19 @@ const Board = () => {
     };
 
     return (
-        <div className={`w-screen h-screen ${theme} ${connectMode ? 'cursor-crosshair' : ''} relative`}>
+        <div className={`w-full h-full ${theme} ${connectMode ? 'cursor-crosshair' : ''} relative overflow-hidden`}>
             {/* Initial Case Loading Overlay */}
             {isBoardLoading && (
-                <div className="fixed inset-0 z-[100] bg-stone-950 flex flex-col items-center justify-center gap-6 p-8">
+                <div className={`fixed inset-0 z-[100] ${theme} flex flex-col items-center justify-center gap-6 p-8 transition-colors duration-500`}>
                     <div className="max-w-md w-full flex flex-col items-center gap-4 text-center">
-                        <div className="w-16 h-16 bg-stone-900 rounded-full flex items-center justify-center border border-stone-800 animate-pulse mb-2">
-                            <RefreshCcw className="w-8 h-8 text-amber-500 animate-[spin_3s_linear_infinite]" />
+                        <div className="relative w-16 h-16 flex items-center justify-center mb-2">
+                            <div className="absolute inset-0 bg-sidebar-accent opacity-10 rounded-full border border-sidebar-accent opacity-20"></div>
+                            <RefreshCcw className="relative z-10 w-8 h-8 text-sidebar-accent animate-[spin_3s_linear_infinite]" />
                         </div>
-                        <h2 className="text-2xl font-serif font-bold text-amber-500 tracking-tight uppercase">
+                        <h2 className="text-2xl font-serif font-bold text-sidebar-accent tracking-tight uppercase">
                             Reconstructing Case Evidence
                         </h2>
-                        <p className="text-stone-500 text-sm font-mono uppercase tracking-widest max-w-[250px]">
+                        <p className="text-panel-foreground opacity-60 text-sm font-mono uppercase tracking-widest max-w-[250px]">
                             Retrieving files from central archive...
                         </p>
                         <ProgressBar isIndeterminate label="Syncing Board..." className="max-w-[200px] mt-4" />
@@ -296,7 +297,7 @@ const Board = () => {
             {/* Top Bar Actions */}
             <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
                 {!isReadOnly && (
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-1 flex items-center gap-1 text-xs font-mono text-stone-400 mr-2">
+                    <div className="bg-panel/10 backdrop-blur-md border border-panel-border/20 rounded-lg p-1 flex items-center gap-1 text-xs font-mono text-panel-foreground/60 mr-2">
                         {saving ? (
                             <div className="flex items-center gap-2 px-2">
                                 <ProgressBar isIndeterminate label="Saving Evidence..." className="max-w-[150px]" />
@@ -318,13 +319,13 @@ const Board = () => {
                     </div>
                 )}
 
-                <div className="bg-stone-900/80 backdrop-blur text-stone-300 px-3 py-2 rounded-lg border border-stone-800 mr-2 text-sm font-bold">
+                <div className="bg-panel/80 backdrop-blur text-panel-foreground px-3 py-2 rounded-lg border border-panel-border mr-2 text-sm font-bold">
                     {boardTitle}
                 </div>
 
                 <button
                     onClick={fetchBoard}
-                    className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg border border-stone-700 transition-colors mr-2"
+                    className="p-2 bg-sidebar-accent/10 hover:bg-sidebar-accent/20 text-sidebar-foreground rounded-lg border border-sidebar-accent/20 transition-colors mr-2"
                     title="Refresh Board"
                 >
                     <RefreshCcw className="w-4 h-4" />
@@ -334,7 +335,7 @@ const Board = () => {
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold shadow-lg transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-accent-foreground rounded-lg font-bold shadow-lg transition-colors disabled:opacity-50"
                         title="Save Board"
                     >
                         <Save className="w-4 h-4" />
@@ -345,7 +346,7 @@ const Board = () => {
                 <button
                     onClick={handleFork}
                     disabled={saving}
-                    className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg border border-stone-700 transition-colors"
+                    className="p-2 bg-sidebar-accent/10 hover:bg-sidebar-accent/20 text-sidebar-foreground rounded-lg border border-sidebar-accent/20 transition-colors"
                     title="Fork Board"
                     aria-label="Fork Board"
                 >
@@ -367,7 +368,7 @@ const Board = () => {
                 {!parentId && (
                     <button
                         onClick={() => setIsContributionsOpen(true)}
-                        className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg border border-stone-700 transition-colors relative"
+                        className="p-2 bg-sidebar-accent/10 hover:bg-sidebar-accent/20 text-sidebar-foreground rounded-lg border border-sidebar-accent/20 transition-colors relative"
                         title="Review Suggestions"
                         aria-label="Review Suggestions"
                     >
@@ -383,7 +384,7 @@ const Board = () => {
                 {!isReadOnly && (
                     <button
                         onClick={() => setIsSettingsOpen(true)}
-                        className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg border border-stone-700 transition-colors"
+                        className="p-2 bg-sidebar-accent/10 hover:bg-sidebar-accent/20 text-sidebar-foreground rounded-lg border border-sidebar-accent/20 transition-colors"
                         title="Settings"
                         aria-label="Settings"
                     >
@@ -393,7 +394,7 @@ const Board = () => {
 
                 <button
                     onClick={handleShare}
-                    className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg border border-stone-700 transition-colors"
+                    className="p-2 bg-sidebar-accent/10 hover:bg-sidebar-accent/20 text-sidebar-foreground rounded-lg border border-sidebar-accent/20 transition-colors"
                     title="Share"
                     aria-label="Share"
                 >

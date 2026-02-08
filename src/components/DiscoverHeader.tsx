@@ -36,7 +36,7 @@ export function DiscoverHeader() {
                                 <UserBadge user={user} rank={rank} size="sm" showRank={false} />
                             </Link>
                             <Link
-                                href="/dashboard"
+                                href="/cases"
                                 className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-bold transition-colors"
                             >
                                 Dashboard

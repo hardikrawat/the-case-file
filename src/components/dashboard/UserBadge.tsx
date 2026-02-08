@@ -35,12 +35,12 @@ export function UserBadge({
             <div className="relative group">
                 {/* ID Card / Badge Container for Avatar */}
                 <div className={twMerge(
-                    "relative overflow-hidden rounded-md border-2 border-stone-700 bg-stone-800 shadow-lg",
+                    "relative overflow-hidden rounded-md border-2 border-[var(--panel-border)] bg-[var(--panel-background)] shadow-lg",
                     sizeClasses[size].split(' ')[0],
                     sizeClasses[size].split(' ')[1]
                 )}>
                     {user.image || user.avatarUrl ? (
-                        <div className="relative w-full h-full grayscale contrast-125 sepia-[.3]">
+                        <div className="relative w-full h-full grayscale hover:grayscale-0 transition-opacity duration-500">
                             <Image
                                 src={user.image || user.avatarUrl || ''}
                                 alt={user.name || "Agent"}
@@ -50,28 +50,28 @@ export function UserBadge({
                             />
                         </div>
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-stone-900 text-stone-500 font-bold font-mono">
+                        <div className="w-full h-full flex items-center justify-center bg-[var(--background)] text-[var(--panel-foreground)]/40 font-bold font-mono">
                             {(user.name?.[0] || "A").toUpperCase()}
                         </div>
                     )}
 
                     {/* "Laminated" Overlay Reflection */}
-                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent opacity-50 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-30 pointer-events-none" />
                 </div>
 
                 {/* Status Indicator */}
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-stone-950 shadow-sm" />
+                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-[var(--background)] shadow-sm" />
             </div>
 
             {(showName || showRank) && (
                 <div className="flex flex-col">
                     {showName && (
-                        <span className="font-mono font-bold text-stone-200 tracking-wider">
+                        <span className="font-mono font-bold text-[var(--foreground)] tracking-wider">
                             {user.name || "UNKNOWN AGENT"}
                         </span>
                     )}
                     {showRank && (
-                        <span className="text-xs font-bold text-amber-600 uppercase tracking-widest border border-amber-900/30 px-1 py-0.5 rounded bg-amber-950/20 inline-block mt-0.5">
+                        <span className="text-[10px] font-bold text-[var(--sidebar-accent)] uppercase tracking-widest border border-[var(--sidebar-accent)]/20 px-1.5 py-0.5 rounded bg-[var(--sidebar-accent)]/10 inline-block mt-0.5">
                             {rank}
                         </span>
                     )}

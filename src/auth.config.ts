@@ -13,14 +13,16 @@ export const authConfig = {
             if (isTestBypass) return true;
 
             const isLoggedIn = !!auth?.user;
-            const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
-            if (isOnDashboard) {
+            const protectedPaths = ['/cases', '/discover', '/settings', '/starred'];
+            const isOnProtected = protectedPaths.some(path => nextUrl.pathname.startsWith(path));
+
+            if (isOnProtected) {
                 if (isLoggedIn) return true;
                 return false; // Redirect unauthenticated users to login page
             } else if (isLoggedIn) {
                 // Redirect logged-in users away from login page
                 if (nextUrl.pathname === '/login') {
-                    return Response.redirect(new URL('/dashboard', nextUrl));
+                    return Response.redirect(new URL('/cases', nextUrl));
                 }
             }
             return true;

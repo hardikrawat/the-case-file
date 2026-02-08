@@ -29,7 +29,7 @@ export default async function DiscoverPage() {
 
   // If authenticated, go to the unified dashboard view
   if (session?.user) {
-    redirect("/dashboard/discover");
+    redirect("/discover");
   }
   let publicBoards: Board[] = [];
   let topDetectives: Detective[] = [];

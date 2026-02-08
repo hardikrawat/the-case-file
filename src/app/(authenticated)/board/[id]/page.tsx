@@ -66,7 +66,7 @@ export default async function BoardPage(props: { params: Promise<{ id: string }>
     }
 
     return (
-        <main className="h-screen w-screen overflow-hidden">
+        <main className="h-full w-full overflow-hidden">
             <Board />
         </main>
     );

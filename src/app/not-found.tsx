@@ -14,7 +14,7 @@ export default function NotFound() {
 
                 <div className="flex gap-4 justify-center">
                     <Link
-                        href="/dashboard"
+                        href="/cases"
                         className="px-6 py-3 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-semibold rounded-lg transition-all duration-200"
                     >
                         Return to Dashboard

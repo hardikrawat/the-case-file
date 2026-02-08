@@ -27,7 +27,7 @@ export default function LeaderboardPage() {
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
-                    <Link href="/dashboard" className="text-amber-500 hover:text-amber-400 text-sm mb-4 inline-block">
+                    <Link href="/cases" className="text-amber-500 hover:text-amber-400 text-sm mb-4 inline-block">
                         ← Back to Dashboard
                     </Link>
                     <h1 className="text-4xl font-bold text-amber-500 font-serif mb-2">Leaderboard</h1>
@@ -49,9 +49,9 @@ export default function LeaderboardPage() {
                                 >
                                     {/* Rank */}
                                     <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${index === 0 ? 'bg-yellow-500 text-stone-950' :
-                                            index === 1 ? 'bg-gray-400 text-stone-950' :
-                                                index === 2 ? 'bg-amber-700 text-stone-200' :
-                                                    'bg-stone-700 text-stone-300'
+                                        index === 1 ? 'bg-gray-400 text-stone-950' :
+                                            index === 2 ? 'bg-amber-700 text-stone-200' :
+                                                'bg-stone-700 text-stone-300'
                                         }`}>
                                         {index + 1}
                                     </div>

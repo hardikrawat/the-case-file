@@ -15,11 +15,11 @@ const ProgressBar = ({ progress = 0, label, className, isIndeterminate = false }
         <div className={twMerge('flex flex-col gap-1.5 w-full max-w-[200px]', className)}>
             {label && (
                 <div className="flex justify-between items-center px-1">
-                    <span className="text-[10px] uppercase font-serif tracking-widest text-stone-500 font-bold">
+                    <span className="text-[10px] uppercase font-serif tracking-widest text-panel-foreground opacity-60 font-bold">
                         {label}
                     </span>
                     {!isIndeterminate && (
-                        <span className="text-[10px] font-mono text-stone-400">
+                        <span className="text-[10px] font-mono text-panel-foreground opacity-40">
                             {Math.round(progress)}%
                         </span>
                     )}

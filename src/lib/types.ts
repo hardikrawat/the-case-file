@@ -10,6 +10,10 @@ export interface Board {
     views: number | null;
     createdAt: Date | string | null;
     updatedAt: Date | string | null;
+    author?: {
+        name: string | null;
+        image: string | null;
+    };
 }
 
 export interface BoardContent {

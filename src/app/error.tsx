@@ -39,7 +39,7 @@ export default function Error({
                         Try Again
                     </button>
                     <Link
-                        href="/dashboard"
+                        href="/cases"
                         className="px-6 py-3 bg-stone-800 hover:bg-stone-700 border border-stone-700 text-stone-200 font-medium rounded-lg transition-all duration-200"
                     >
                         Return to Dashboard

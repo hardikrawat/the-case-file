@@ -52,7 +52,7 @@ export default function LoginPage() {
                 }
             } else {
                 toast.success('Access Granted. Welcome back, Detective.');
-                router.push('/dashboard');
+                router.push('/cases');
             }
         } catch {
             toast.error('System malfuction. Try again.');
@@ -64,7 +64,7 @@ export default function LoginPage() {
     const handleOAuthSignIn = async (provider: 'github' | 'google') => {
         setIsLoading(true);
         try {
-            await signIn(provider, { callbackUrl: '/dashboard' });
+            await signIn(provider, { callbackUrl: '/cases' });
         } catch {
             toast.error(`Failed to authorize via ${provider}`);
             setIsLoading(false);
