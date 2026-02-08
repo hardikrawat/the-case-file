@@ -72,17 +72,6 @@ describe('Toolbar Component', () => {
         }));
     });
 
-    it('should toggle connect mode', () => {
-        const toggleSpy = vi.fn();
-        useStore.setState({ toggleConnectMode: toggleSpy, connectMode: false });
-
-        render(<Toolbar />);
-
-        const linkBtn = screen.getByTitle('Connect Items');
-        fireEvent.click(linkBtn);
-
-        expect(toggleSpy).toHaveBeenCalled();
-    });
 
     it('should change theme', () => {
         const setThemeSpy = vi.fn();

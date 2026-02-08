@@ -11,7 +11,6 @@ describe('useStore', () => {
             boardTitle: 'Untitled Case',
             isPublic: false,
             parentId: null,
-            connectMode: false,
         });
     });
 
@@ -71,15 +70,6 @@ describe('useStore', () => {
         expect(useStore.getState().edges).toHaveLength(0);
     });
 
-    it('should toggle connect mode', () => {
-        expect(useStore.getState().connectMode).toBe(false);
-
-        act(() => {
-            useStore.getState().toggleConnectMode();
-        });
-
-        expect(useStore.getState().connectMode).toBe(true);
-    });
 
     it('should set board metadata', () => {
         act(() => {

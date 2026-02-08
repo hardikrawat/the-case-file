@@ -28,10 +28,6 @@ type RFState = {
     updateNodeData: (id: string, data: unknown) => void;
     setNodes: (nodes: Node[]) => void;
     setEdges: (edges: Edge[]) => void;
-    connectMode: boolean;
-    toggleConnectMode: () => void;
-    sourceNodeId: string | null;
-    setSourceNodeId: (id: string | null) => void;
     boardTitle: string;
     parentId: string | null; // ID of the parent board if this is a fork
     isPublic: boolean;
@@ -88,10 +84,6 @@ const useStore = create<RFState>()(
             setActiveColor: (activeColor) => set({ activeColor }),
             setNodes: (nodes) => set({ nodes }),
             setEdges: (edges) => set({ edges }),
-            connectMode: false,
-            toggleConnectMode: () => set({ connectMode: !get().connectMode, sourceNodeId: null }),
-            sourceNodeId: null,
-            setSourceNodeId: (sourceNodeId) => set({ sourceNodeId }),
             updateNodeData: (id, data) => {
                 set({
                     nodes: get().nodes.map((node) => {
