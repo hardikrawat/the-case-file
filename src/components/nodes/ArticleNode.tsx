@@ -73,100 +73,115 @@ const ArticleNode = ({ id, data, selected }: NodeProps) => {
         <div
             style={{ transform: `rotate(${rotation}deg)` }}
             className={twMerge(
-                'relative w-72 flex flex-col transition-all duration-300 ease-in-out',
-                'newspaper-clipping torn-edge p-1',
-                selected && 'ring-2 ring-amber-700/50 shadow-2xl scale-[1.02]',
+                'relative w-72 transition-all duration-300 ease-in-out',
+                selected && 'scale-[1.02]',
                 'group',
                 isReadOnly ? 'pointer-events-none' : ''
             )}
         >
-            {/* Header / Masthead Style */}
-            <div className="px-3 pt-4 pb-2 border-b border-black/10 text-center">
-                <p className="text-[10px] font-serif uppercase tracking-[0.2em] text-stone-500 mb-1">
-                    Special Report • {new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-                </p>
-                <input
-                    className={twMerge(
-                        "font-serif font-black text-stone-900 bg-transparent border-none focus:outline-none placeholder-stone-400 text-xl text-center leading-tight tracking-tight px-0 mb-4",
-                        isReadOnly ? "cursor-default" : ""
-                    )}
-                    style={{ fontVariantCaps: 'small-caps' }}
-                    placeholder={isReadOnly ? "" : "THE DAILY HEADLINE"}
-                    value={data.title || ''}
-                    onChange={handleTitleChange}
-                    onKeyDown={(evt) => evt.stopPropagation()}
-                    readOnly={isReadOnly}
-                />
-            </div>
+            {/* Background / Shape Layer (Clipped) */}
+            <div
+                className={twMerge(
+                    "absolute inset-0 w-full h-full newspaper-clipping torn-edge",
+                    selected && 'ring-2 ring-amber-700/50 shadow-2xl'
+                )}
+            />
 
-            {/* Preview Image / Newsprint Photo */}
-            <div className="px-4 py-2">
-                <div className="aspect-[4/3] bg-stone-300/30 flex items-center justify-center relative overflow-hidden border border-black/5 shadow-inner">
-                    {isLoading ? (
-                        <ProgressBar isIndeterminate label="Extracting..." className="max-w-[120px]" />
-                    ) : data.image ? (
-                        <div className="relative w-full h-full newsprint-image opacity-80">
-                            <Image
-                                src={data.image}
-                                alt={data.title}
-                                fill
-                                className="object-cover"
-                                unoptimized
+            {/* Content Layer */}
+            <div className="relative z-10 flex flex-col p-1 w-full h-full torn-edge">
+                {/* Visual Thumb Tack / Pin */}
+                <div className="thumb-tack" />
+
+                {/* Header / Masthead Style */}
+                <div className="px-3 pt-4 pb-2 border-b border-black/10 text-center">
+                    <p className="text-[10px] font-serif uppercase tracking-[0.2em] text-stone-500 mb-1">
+                        Special Report • {new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </p>
+                    <input
+                        className={twMerge(
+                            "font-serif font-black text-stone-900 bg-transparent border-none focus:outline-none placeholder-stone-400 text-xl text-center leading-tight tracking-tight px-0 mb-4",
+                            isReadOnly ? "cursor-default" : ""
+                        )}
+                        style={{ fontVariantCaps: 'small-caps' }}
+                        placeholder={isReadOnly ? "" : "THE DAILY HEADLINE"}
+                        value={data.title || ''}
+                        onChange={handleTitleChange}
+                        onKeyDown={(evt) => evt.stopPropagation()}
+                        readOnly={isReadOnly}
+                    />
+                </div>
+
+                {/* Preview Image / Newsprint Photo */}
+                <div className="px-4 py-2">
+                    <div className="aspect-[4/3] bg-stone-300/30 flex items-center justify-center relative overflow-hidden border border-black/5 shadow-inner">
+                        {isLoading ? (
+                            <ProgressBar isIndeterminate label="Extracting..." className="max-w-[120px]" />
+                        ) : data.image ? (
+                            <div className="relative w-full h-full newsprint-image opacity-80">
+                                <Image
+                                    src={data.image}
+                                    alt={data.title}
+                                    fill
+                                    className="object-cover"
+                                    unoptimized
+                                />
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center gap-2 text-stone-400 opacity-50">
+                                <Globe size={32} />
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="px-4 pb-6 pt-1 flex flex-col gap-3">
+                    {data.description && (
+                        <p className="text-xs text-stone-700 font-serif leading-relaxed italic border-l-2 border-stone-300 pl-3 py-1">
+                            {data.description}
+                        </p>
+                    )}
+
+                    {/* Meta & URL */}
+                    <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-black/5">
+                        <div className="flex items-center gap-2 text-[10px] text-stone-400">
+                            <Globe size={10} />
+                            <input
+                                className="w-full bg-transparent border-none focus:outline-none truncate font-mono tracking-tight"
+                                placeholder={isReadOnly ? "" : "https://example.com"}
+                                value={urlInput}
+                                onChange={(e) => !isReadOnly && setUrlInput(e.target.value)}
+                                onKeyDown={(evt) => evt.stopPropagation()}
+                                readOnly={isReadOnly}
                             />
                         </div>
-                    ) : (
-                        <Globe className="text-stone-400 opacity-30" size={48} />
-                    )}
-                </div>
-            </div>
 
-            <div className="px-4 pb-6 pt-1 flex flex-col gap-3">
-                {data.description && (
-                    <p className="text-xs text-stone-700 font-serif leading-relaxed italic border-l-2 border-stone-300 pl-3 py-1">
-                        {data.description}
-                    </p>
-                )}
-
-                {/* Meta & URL */}
-                <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-black/5">
-                    <div className="flex items-center gap-2 text-[10px] text-stone-400">
-                        <Globe size={10} />
-                        <input
-                            className="w-full bg-transparent border-none focus:outline-none truncate font-mono tracking-tight"
-                            placeholder={isReadOnly ? "" : "https://example.com"}
-                            value={urlInput}
-                            onChange={(e) => !isReadOnly && setUrlInput(e.target.value)}
-                            onKeyDown={(evt) => evt.stopPropagation()}
-                            readOnly={isReadOnly}
-                        />
+                        {data.url && (
+                            <a
+                                href={data.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-[10px] text-stone-500 hover:text-stone-800 transition-colors py-1 w-fit pointer-events-auto"
+                                onKeyDown={(evt) => evt.stopPropagation()}
+                            >
+                                Read Full Story <ExternalLink size={8} />
+                            </a>
+                        )}
                     </div>
-
-                    {data.url && (
-                        <a
-                            href={data.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[10px] text-stone-500 hover:text-stone-800 transition-colors py-1 w-fit pointer-events-auto"
-                            onKeyDown={(evt) => evt.stopPropagation()}
-                        >
-                            Read Full Story <ExternalLink size={8} />
-                        </a>
-                    )}
                 </div>
             </div>
 
-            {/* Handles */}
+            {/* Handles - pinned to the top center */}
             <Handle
                 type="target"
                 position={Position.Top}
                 id="target"
-                className="w-3 h-3 -top-1.5 left-1/2 -translate-x-1/2 bg-stone-800 border-stone-200 z-20 rounded-full"
+                className="size-3 -top-1 left-1/2 -translate-x-1/2 bg-stone-800 border-none z-50 rounded-full opacity-0 group-hover:opacity-100"
             />
             <Handle
                 type="source"
-                position={Position.Bottom}
+                position={Position.Top}
                 id="source"
-                className="w-3 h-3 -bottom-1.5 left-1/2 -translate-x-1/2 bg-stone-800 border-stone-200 z-20 rounded-full"
+                className="size-3 -top-1 left-1/2 -translate-x-1/2 bg-stone-800 border-none z-50 rounded-full opacity-0 group-hover:opacity-100"
             />
         </div>
     );

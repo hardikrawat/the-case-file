@@ -4,7 +4,7 @@ import React from 'react';
 import { useReactFlow } from 'reactflow';
 import useStore from '@/store/useStore';
 
-import { Download, Trash2, Link, Upload } from 'lucide-react';
+import { Download, Trash2, Upload } from 'lucide-react';
 
 const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
     const addNode = useStore((state) => state.addNode);
@@ -15,8 +15,7 @@ const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
     const edges = useStore((state) => state.edges);
     const setNodes = useStore((state) => state.setNodes);
     const setEdges = useStore((state) => state.setEdges);
-    const connectMode = useStore((state) => state.connectMode);
-    const toggleConnectMode = useStore((state) => state.toggleConnectMode);
+
     const setTheme = useStore((state) => state.setTheme);
     const theme = useStore((state) => state.theme);
     const { project } = useReactFlow();
@@ -172,13 +171,7 @@ const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
 
             <div className="w-px h-6 bg-gray-300 mx-2"></div>
 
-            <button
-                onClick={toggleConnectMode}
-                className={`p-2 rounded-lg transition-colors ${connectMode ? 'bg-blue-100 text-blue-600 ring-2 ring-blue-400' : 'hover:bg-gray-100 text-gray-600'}`}
-                title={connectMode ? "Exit Connect Mode" : "Connect Items"}
-            >
-                <Link size={18} />
-            </button>
+
 
             <label className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors cursor-pointer" title="Import JSON">
                 <Upload size={18} />
