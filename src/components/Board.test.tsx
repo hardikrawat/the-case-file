@@ -3,6 +3,15 @@ import { describe, it, expect, vi } from 'vitest';
 import Board from '@/components/Board';
 import useStore from '@/store/useStore';
 
+// Mock next-auth
+vi.mock('next-auth/react', () => ({
+    useSession: vi.fn(() => ({
+        data: { user: { id: 'test-user', name: 'Test User' } },
+        status: 'authenticated',
+    })),
+    SessionProvider: ({ children }: any) => <div>{children}</div>,
+}));
+
 // Mock ReactFlow
 vi.mock('reactflow', async () => {
     return {
