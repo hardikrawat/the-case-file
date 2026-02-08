@@ -6,7 +6,10 @@ import useStore from '@/store/useStore';
 const TextNode = ({ id, data, selected }: NodeProps) => {
     const updateNodeData = useStore((state) => state.updateNodeData);
 
+    const isReadOnly = data.isReadOnly;
+
     const handleChange = (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
+        if (isReadOnly) return;
         updateNodeData(id, { label: evt.target.value });
     };
 
@@ -16,13 +19,17 @@ const TextNode = ({ id, data, selected }: NodeProps) => {
                 'relative min-w-[150px] min-h-[50px] p-2 flex flex-col transition-all duration-200 ease-in-out',
                 'border border-transparent hover:border-dashed hover:border-gray-400/50 rounded-sm', // Show border on hover for easier selection
                 selected && 'border-dashed border-blue-500 bg-blue-500/10',
-                'group'
+                'group',
+                isReadOnly ? 'pointer-events-none' : ''
             )}
         >
             <textarea
-                className="w-full h-full bg-transparent border-none resize-none focus:outline-none text-xl font-bold text-center leading-tight overflow-hidden"
+                className={twMerge(
+                    "w-full h-full bg-transparent border-none resize-none focus:outline-none text-xl font-bold text-center leading-tight overflow-hidden",
+                    isReadOnly ? "cursor-default" : ""
+                )}
                 style={{ color: 'var(--foreground)' }}
-                placeholder="Label..."
+                placeholder={isReadOnly ? "" : "Label..."}
                 defaultValue={data.label}
                 onChange={handleChange}
                 onKeyDown={(evt) => evt.stopPropagation()}
@@ -33,6 +40,7 @@ const TextNode = ({ id, data, selected }: NodeProps) => {
                     target.style.height = 'auto';
                     target.style.height = target.scrollHeight + 'px';
                 }}
+                readOnly={isReadOnly}
             />
 
             {/* Handles */}

@@ -9,7 +9,10 @@ const StickyNoteNode = ({ id, data, selected }: NodeProps) => {
     // Slight random rotation for "pinned" effect
     const rotation = React.useMemo(() => (Math.random() * 4 - 2).toFixed(2), []);
 
+    const isReadOnly = data.isReadOnly;
+
     const handleChange = (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
+        if (isReadOnly) return;
         updateNodeData(id, { label: evt.target.value });
     };
 
@@ -26,7 +29,8 @@ const StickyNoteNode = ({ id, data, selected }: NodeProps) => {
                 'relative w-64 h-64 p-6 pt-10 flex flex-col transition-all duration-300 ease-in-out',
                 'sticky-note-paper hand-cut curled-corner',
                 selected ? 'paper-depth-shadow-selected scale-[1.03]' : 'paper-depth-shadow',
-                'group'
+                'group',
+                isReadOnly ? 'pointer-events-none' : ''
             )}
         >
             {/* Visual Thumb Tack / Pin */}
@@ -34,11 +38,15 @@ const StickyNoteNode = ({ id, data, selected }: NodeProps) => {
 
             {/* Content Area */}
             <textarea
-                className="w-full h-full bg-transparent border-none resize-none focus:outline-none text-xl leading-relaxed placeholder-stone-600/30 font-medium"
-                placeholder="Pin a clue..."
+                className={twMerge(
+                    "w-full h-full bg-transparent border-none resize-none focus:outline-none text-xl leading-relaxed placeholder-stone-600/30 font-medium",
+                    isReadOnly ? "cursor-default" : ""
+                )}
+                placeholder={isReadOnly ? "" : "Pin a clue..."}
                 defaultValue={data.label}
                 onChange={handleChange}
                 onKeyDown={(evt) => evt.stopPropagation()}
+                readOnly={isReadOnly}
             />
 
             {/* Connection Handles (Pinned center) */}

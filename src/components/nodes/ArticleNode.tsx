@@ -63,8 +63,11 @@ const ArticleNode = ({ id, data, selected }: NodeProps) => {
     }, [urlInput, data.url, id, updateNodeData]);
 
     const handleTitleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
+        if (data.isReadOnly) return;
         updateNodeData(id, { title: evt.target.value });
     };
+
+    const isReadOnly = data.isReadOnly;
 
     return (
         <div
@@ -73,7 +76,8 @@ const ArticleNode = ({ id, data, selected }: NodeProps) => {
                 'relative w-72 flex flex-col transition-all duration-300 ease-in-out',
                 'newspaper-clipping torn-edge p-1',
                 selected && 'ring-2 ring-amber-700/50 shadow-2xl scale-[1.02]',
-                'group'
+                'group',
+                isReadOnly ? 'pointer-events-none' : ''
             )}
         >
             {/* Header / Masthead Style */}
@@ -82,12 +86,16 @@ const ArticleNode = ({ id, data, selected }: NodeProps) => {
                     Special Report • {new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                 </p>
                 <input
-                    className="font-serif font-black text-stone-900 bg-transparent border-none focus:outline-none placeholder-stone-400 text-xl text-center leading-tight tracking-tight px-0 mb-4"
+                    className={twMerge(
+                        "font-serif font-black text-stone-900 bg-transparent border-none focus:outline-none placeholder-stone-400 text-xl text-center leading-tight tracking-tight px-0 mb-4",
+                        isReadOnly ? "cursor-default" : ""
+                    )}
                     style={{ fontVariantCaps: 'small-caps' }}
-                    placeholder="THE DAILY HEADLINE"
+                    placeholder={isReadOnly ? "" : "THE DAILY HEADLINE"}
                     value={data.title || ''}
                     onChange={handleTitleChange}
                     onKeyDown={(evt) => evt.stopPropagation()}
+                    readOnly={isReadOnly}
                 />
             </div>
 
@@ -124,10 +132,11 @@ const ArticleNode = ({ id, data, selected }: NodeProps) => {
                         <Globe size={10} />
                         <input
                             className="w-full bg-transparent border-none focus:outline-none truncate font-mono tracking-tight"
-                            placeholder="https://example.com"
+                            placeholder={isReadOnly ? "" : "https://example.com"}
                             value={urlInput}
-                            onChange={(e) => setUrlInput(e.target.value)}
+                            onChange={(e) => !isReadOnly && setUrlInput(e.target.value)}
                             onKeyDown={(evt) => evt.stopPropagation()}
+                            readOnly={isReadOnly}
                         />
                     </div>
 
@@ -136,7 +145,7 @@ const ArticleNode = ({ id, data, selected }: NodeProps) => {
                             href={data.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[10px] text-stone-500 hover:text-stone-800 transition-colors py-1 w-fit"
+                            className="inline-flex items-center gap-1 text-[10px] text-stone-500 hover:text-stone-800 transition-colors py-1 w-fit pointer-events-auto"
                             onKeyDown={(evt) => evt.stopPropagation()}
                         >
                             Read Full Story <ExternalLink size={8} />

@@ -6,10 +6,11 @@ import useStore from '@/store/useStore';
 
 import { Download, Trash2, Link, Upload } from 'lucide-react';
 
-const Toolbar = () => {
+const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
     const setTheme = useStore((state) => state.setTheme);
     const theme = useStore((state) => state.theme);
     const addNode = useStore((state) => state.addNode);
+
     const activeColor = useStore((state) => state.activeColor);
     const setActiveColor = useStore((state) => state.setActiveColor);
     const nodes = useStore((state) => state.nodes);
@@ -19,6 +20,8 @@ const Toolbar = () => {
     const connectMode = useStore((state) => state.connectMode);
     const toggleConnectMode = useStore((state) => state.toggleConnectMode);
     const { project, getViewport } = useReactFlow();
+
+    if (isReadOnly) return null;
 
     const addSticky = () => {
         const { x, y, zoom } = getViewport();

@@ -13,8 +13,11 @@ import ReactFlow, {
 import { useShallow } from 'zustand/react/shallow';
 import 'reactflow/dist/style.css';
 import { useParams, useRouter } from 'next/navigation';
-import { Save, Settings, Share2, Check, GitFork, GitPullRequest, RefreshCcw } from 'lucide-react';
+import { Save, Settings, Share2, Check, GitFork, GitPullRequest, RefreshCcw, Eye } from 'lucide-react';
 import { toast } from 'sonner';
+import { useSession } from 'next-auth/react';
+import { useUser } from '@/hooks/useUser';
+import { UserBadge } from '@/components/dashboard/UserBadge';
 
 import useStore from '@/store/useStore';
 import Toolbar from '@/components/ui/Toolbar';
@@ -40,12 +43,18 @@ const Board = () => {
     const params = useParams();
     const router = useRouter();
     const boardId = params?.id as string;
+    const { data: session } = useSession();
+    const { user: userProfile, rank } = useUser();
 
     const [saving, setSaving] = useState(false);
     const [isBoardLoading, setIsBoardLoading] = useState(true);
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isContributionsOpen, setIsContributionsOpen] = useState(false);
+
+    // Ownership & Permissions
+    const [boardOwnerId, setBoardOwnerId] = useState<string | null>(null);
+    const [pendingContributionCount, setPendingContributionCount] = useState(0);
 
     const nodes = useStore((state) => state.nodes);
     const edges = useStore((state) => state.edges);
@@ -61,6 +70,17 @@ const Board = () => {
     const setBoardMetadata = useStore((state) => state.setBoardMetadata);
     const boardTitle = useStore((state) => state.boardTitle);
     const parentId = useStore((state) => state.parentId);
+
+    // Determine read-only status based on session and board ownership
+    // If board is loading, default to false to avoid flash. If board loaded and user doesn't match owner, read-only.
+    // NOTE: In a real app, we'd also check collaborator list. Board owner ID is sufficient for "User B vs A".
+    const isReadOnly = useMemo(() => {
+        if (!boardOwnerId || !session?.user?.id) return false; // Optimistic or waiting
+        // Actually, if no session, it SHOULD be read-only if public.
+        // But let's assume if (!session) -> readOnly = true (for public viewers).
+        if (!session.user) return true;
+        return session.user.id !== boardOwnerId;
+    }, [boardOwnerId, session]);
 
     const edgeTypes = useMemo(
         () => ({
@@ -81,6 +101,16 @@ const Board = () => {
                     setEdges(data.content.edges || []);
                 }
                 setBoardMetadata(data.title, data.isPublic, data.parentId);
+                setBoardOwnerId(data.userId);
+
+                // Fetch pending notifications if owner
+                if (session?.user?.id === data.userId) {
+                    const contribRes = await fetch(`/api/contributions?boardId=${boardId}`);
+                    if (contribRes.ok) {
+                        const contribs = await contribRes.json();
+                        setPendingContributionCount(contribs.filter((c: any) => c.status === 'open').length);
+                    }
+                }
             }
         } catch (error) {
             console.error('Failed to load board:', error);
@@ -152,6 +182,7 @@ const Board = () => {
                 body: JSON.stringify({
                     title: `Copy of ${boardTitle}`,
                     isPublic: false,
+                    parentId: boardId,
                     content
                 }),
             });
@@ -232,6 +263,24 @@ const Board = () => {
                 </div>
             )}
 
+            {/* Read-Only Banner */}
+            {isReadOnly && !isBoardLoading && (
+                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 bg-amber-900/90 text-amber-100 px-6 py-3 rounded-lg shadow-2xl border border-amber-700/50 backdrop-blur-md flex items-center gap-4">
+                    <div className="flex flex-col">
+                        <span className="font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+                            <Eye className="w-4 h-4" /> Archived Evidence (Read Only)
+                        </span>
+                        <span className="text-xs opacity-80">You are viewing a secure file. Fork it to add your own evidence.</span>
+                    </div>
+                    <button
+                        onClick={handleFork}
+                        className="px-4 py-2 bg-stone-900 hover:bg-black text-white rounded font-bold text-xs uppercase tracking-widest border border-stone-700 transition-colors"
+                    >
+                        Fork Case
+                    </button>
+                </div>
+            )}
+
             <BoardSettingsModal
                 isOpen={isSettingsOpen}
                 onClose={() => setIsSettingsOpen(false)}
@@ -242,21 +291,33 @@ const Board = () => {
                 onClose={() => setIsContributionsOpen(false)}
                 boardId={boardId}
                 onMergeSuccess={fetchBoard}
+                isReadOnly={isReadOnly}
             />
 
             {/* Top Bar Actions */}
             <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-1 flex items-center gap-1 text-xs font-mono text-stone-400 mr-2">
-                    {saving ? (
-                        <div className="flex items-center gap-2 px-2">
-                            <ProgressBar isIndeterminate label="Saving Evidence..." className="max-w-[150px]" />
-                        </div>
-                    ) : lastSaved ? (
-                        <span className="flex items-center gap-1 px-2 text-green-400"><Check className="w-3 h-3" /> Saved {lastSaved.toLocaleTimeString()}</span>
-                    ) : (
-                        <span className="px-2">Unsaved changes</span>
-                    )}
-                </div>
+                {!isReadOnly && (
+                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-1 flex items-center gap-1 text-xs font-mono text-stone-400 mr-2">
+                        {saving ? (
+                            <div className="flex items-center gap-2 px-2">
+                                <ProgressBar isIndeterminate label="Saving Evidence..." className="max-w-[150px]" />
+                            </div>
+                        ) : lastSaved ? (
+                            <span className="flex items-center gap-1 px-2 text-green-400"><Check className="w-3 h-3" /> Saved {lastSaved.toLocaleTimeString()}</span>
+                        ) : (
+                            <span className="px-2">Unsaved changes</span>
+                        )}
+                    </div>
+                )}
+
+                {/* User Badge - Only show when not read-only to avoid clutter for public viewers, or maybe always show? 
+                    Let's show it always if authenticated, as it's the user's identity. 
+                */}
+                {userProfile && !isBoardLoading && (
+                    <div className="mr-4 hidden sm:block">
+                        <UserBadge user={userProfile} rank={rank} size="sm" showName={false} showRank={false} />
+                    </div>
+                )}
 
                 <div className="bg-stone-900/80 backdrop-blur text-stone-300 px-3 py-2 rounded-lg border border-stone-800 mr-2 text-sm font-bold">
                     {boardTitle}
@@ -270,15 +331,18 @@ const Board = () => {
                     <RefreshCcw className="w-4 h-4" />
                 </button>
 
-                <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold shadow-lg transition-colors disabled:opacity-50"
-                    title="Save Board"
-                >
-                    <Save className="w-4 h-4" />
-                    Save
-                </button>
+                {!isReadOnly && (
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold shadow-lg transition-colors disabled:opacity-50"
+                        title="Save Board"
+                    >
+                        <Save className="w-4 h-4" />
+                        Save
+                    </button>
+                )}
+
                 <button
                     onClick={handleFork}
                     disabled={saving}
@@ -288,7 +352,8 @@ const Board = () => {
                 >
                     <GitFork className="w-5 h-5" />
                 </button>
-                {parentId && (
+
+                {parentId && !isReadOnly && (
                     <button
                         onClick={handleSuggestChanges}
                         disabled={saving}
@@ -299,24 +364,34 @@ const Board = () => {
                         <GitPullRequest className="w-5 h-5" />
                     </button>
                 )}
+
                 {!parentId && (
                     <button
                         onClick={() => setIsContributionsOpen(true)}
-                        className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg border border-stone-700 transition-colors"
+                        className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg border border-stone-700 transition-colors relative"
                         title="Review Suggestions"
                         aria-label="Review Suggestions"
                     >
                         <GitPullRequest className="w-5 h-5 rotate-180" />
+                        {pendingContributionCount > 0 && (
+                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white font-bold animate-pulse">
+                                {pendingContributionCount}
+                            </span>
+                        )}
                     </button>
                 )}
-                <button
-                    onClick={() => setIsSettingsOpen(true)}
-                    className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg border border-stone-700 transition-colors"
-                    title="Settings"
-                    aria-label="Settings"
-                >
-                    <Settings className="w-5 h-5" />
-                </button>
+
+                {!isReadOnly && (
+                    <button
+                        onClick={() => setIsSettingsOpen(true)}
+                        className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg border border-stone-700 transition-colors"
+                        title="Settings"
+                        aria-label="Settings"
+                    >
+                        <Settings className="w-5 h-5" />
+                    </button>
+                )}
+
                 <button
                     onClick={handleShare}
                     className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg border border-stone-700 transition-colors"
@@ -328,15 +403,20 @@ const Board = () => {
             </div>
 
             <ReactFlow
-                nodes={nodes}
+                nodes={nodes.map(n => ({ ...n, data: { ...n.data, isReadOnly } }))}
                 edges={edges}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
                 defaultEdgeOptions={{ type: 'string', animated: false }}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
+                onNodesChange={!isReadOnly ? onNodesChange : undefined}
+                onEdgesChange={!isReadOnly ? onEdgesChange : undefined}
+                onConnect={!isReadOnly ? onConnect : undefined}
                 onNodeClick={onNodeClick}
+                nodesDraggable={!isReadOnly}
+                nodesConnectable={!isReadOnly && !connectMode}
+                elementsSelectable={true}
+                panOnDrag={true}
+                zoomOnScroll={true}
                 fitView
             >
                 <Background
@@ -348,9 +428,9 @@ const Board = () => {
                 />
                 <Controls />
                 <MiniMap />
-                <Toolbar />
+                <Toolbar isReadOnly={isReadOnly} />
             </ReactFlow>
-        </div>
+        </div >
     );
 };
 

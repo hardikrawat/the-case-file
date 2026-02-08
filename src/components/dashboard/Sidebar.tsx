@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, FileText, Star, Settings, LogOut, Plus } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
+import { useUser } from "@/hooks/useUser";
+import { UserBadge } from "./UserBadge";
 
 const navigation = [
     { name: "Discover", href: "/dashboard/discover", icon: LayoutDashboard },
@@ -16,6 +18,7 @@ const navigation = [
 export function Sidebar() {
     const pathname = usePathname();
     const [isSigningOut, setIsSigningOut] = useState(false);
+    const { user, rank, isAuthenticated } = useUser();
 
     const handleSignOut = async () => {
         setIsSigningOut(true);
@@ -55,6 +58,14 @@ export function Sidebar() {
             </nav>
 
             <div className="p-4 border-t border-stone-800">
+                {isAuthenticated && (
+                    <div className="mb-4 bg-stone-950/50 p-3 rounded-lg border border-stone-800">
+                        <Link href={`/profile/${user?.id}`} className="block hover:opacity-80 transition-opacity">
+                            <UserBadge user={user} rank={rank} size="sm" />
+                        </Link>
+                    </div>
+                )}
+
                 <button
                     onClick={handleSignOut}
                     disabled={isSigningOut}
