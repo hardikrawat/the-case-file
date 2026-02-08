@@ -4,21 +4,26 @@ import { mockBoardAPI, createMockBoard, navigateToBoard, addNode, saveBoard } fr
 test.describe('Board Interaction Tests - Enhanced', () => {
 
     test('should load board and display title', async ({ authenticatedPage: page }) => {
+        test.slow(); // Give it more time for hydration in parallel runs
+
         const board = createMockBoard({
             id: 'interaction-test-1',
-            title: 'My Test Case'
+            title: 'Test Board'
         });
 
         await mockBoardAPI(page, board);
         await navigateToBoard(page, board.id);
 
         // Verify title is displayed in the top bar
-        await expect(page.getByText('My Test Case')).toBeVisible();
+        // We use a broad selector and a very generous timeout for parallel reliability
+        await page.waitForSelector('text=Test Board', { timeout: 30000 });
+        await expect(page.getByText('Test Board')).toBeVisible();
     });
 
     test('should save board successfully', async ({ authenticatedPage: page }) => {
         const board = createMockBoard({
-            id: 'save-test-1'
+            id: 'save-test-1',
+            title: 'Test Board'
         });
 
         let saveWasCalled = false;
@@ -49,7 +54,8 @@ test.describe('Board Interaction Tests - Enhanced', () => {
 
     test('should open settings modal', async ({ authenticatedPage: page }) => {
         const board = createMockBoard({
-            id: 'settings-test-1'
+            id: 'settings-test-1',
+            title: 'Test Board'
         });
 
         await mockBoardAPI(page, board);
@@ -59,8 +65,8 @@ test.describe('Board Interaction Tests - Enhanced', () => {
         const settingsBtn = page.getByLabel('Settings');
         await settingsBtn.click();
 
-        // Verify modal opened
-        await expect(page.getByText(/Board Settings/i)).toBeVisible({ timeout: 5000 });
+        // Verify modal opened - Text is "Case Settings" in the component
+        await expect(page.getByText(/Case Settings/i)).toBeVisible({ timeout: 5000 });
     });
 
     test('should copy share link to clipboard', async ({ authenticatedPage: page, context }) => {

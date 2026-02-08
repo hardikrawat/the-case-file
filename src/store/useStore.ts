@@ -42,6 +42,7 @@ type RFState = {
 
 const safeStorage = {
     getItem: (name: string) => {
+        if (typeof window === 'undefined') return null;
         try {
             const data = localStorage.getItem(name);
             return data ? JSON.parse(data) : null;
@@ -51,6 +52,7 @@ const safeStorage = {
         }
     },
     setItem: (name: string, value: unknown) => {
+        if (typeof window === 'undefined') return;
         try {
             localStorage.setItem(name, JSON.stringify(value));
         } catch (e) {
@@ -66,7 +68,10 @@ const safeStorage = {
             }
         }
     },
-    removeItem: (name: string) => localStorage.removeItem(name),
+    removeItem: (name: string) => {
+        if (typeof window === 'undefined') return;
+        localStorage.removeItem(name);
+    },
 };
 
 const useStore = create<RFState>()(
