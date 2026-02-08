@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# The Case File
+
+The Case File is a visual investigation board application designed for connecting complex pieces of information. It provides a digital "detective board" experience where users can create nodes, link them with red strings, and collaborate on investigations.
+
+## Core Features
+
+- Digital Investigation Board: A flexible canvas for placing and organizing case evidence.
+- Interactive Nodes: Create and edit various types of evidence nodes including Articles, Sticky Notes, and more.
+- Dynamic Connections: Use the signature "red string" to connect related nodes and visualize relationships.
+- Authentication and User Profiles: Secure login system with detective reputation tracking.
+- Collaborative Tools: Shared board access and version history.
+- Export Capabilities: Save your investigation board as PDF or image.
+
+## Architecture
+
+The project follows a modern full-stack architecture:
+
+- Frontend: Next.js 15 (App Router) using React for UI components.
+- Board Engine: ReactFlow handles the complex canvas interactions, node rendering, and edge management.
+- State Management: Zustand provides a lightweight and performant store for application state.
+- Backend: Next.js API Routes (Serverless) for data processing and authentication logic.
+- Database: Turso (libSQL) - a distributed database at the edge.
+- ORM: Drizzle ORM for type-safe database queries and migrations.
+- Authentication: Auth.js (NextAuth) for secure session management and provider integration.
+- Styling: Tailwind CSS for a responsive and consistent noir-themed aesthetic.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js (Latest LTS version recommended)
+- Turso CLI (for database management)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Clone the repository:
+   git clone https://github.com/hardikrawat/the-case-file.git
+   cd the-case-file
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Install dependencies:
+   npm install
 
-## Learn More
+3. Configure environment variables:
+   cp .env.example .env.local
+   Fill in your TURSO_DATABASE_URL and TURSO_AUTH_TOKEN.
+   Generate an AUTH_SECRET using 'npx auth secret'.
 
-To learn more about Next.js, take a look at the following resources:
+4. Initialize the database:
+   npx drizzle-kit push
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. Start the development server:
+   npm run dev
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Scripts
 
-## Deploy on Vercel
+- npm run dev: Start development server.
+- npm run build: Build for production.
+- npm run lint: Run ESLint for code quality checks.
+- npm test: Run unit and integration tests using Vitest.
+- npm run test:e2e: Run end-to-end tests using Playwright.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Key Dependencies
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- next: React framework for the web.
+- reactflow: Library for building node-based editors and diagrams.
+- drizzle-orm: TypeScript ORM for SQL databases.
+- next-auth: Authentication for Next.js.
+- zustand: Small, fast and scalable bearbones state-management solution.
+- tailwindcss: Utility-first CSS framework.
+
+## License
+
+Private Repository - All Rights Reserved.

@@ -1,15 +1,10 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -20,7 +15,293 @@
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
+  background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+  overflow: hidden;
+  /* Prevent scrolling for canvas app */
+}
+
+/* Noise Overlay */
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* Themes */
+.theme-cork {
+  --background: #a1887f;
+  /* Natural cork */
+  --foreground: #3e2723;
+  --accent: #d32f2f;
+  background-color: var(--background);
+  background-image:
+    radial-gradient(circle at 2px 2px, #8d6e63 1px, transparent 1px),
+    radial-gradient(circle at 10px 10px, #795548 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.theme-noir {
+  --background: #0f172a;
+  /* Deep detective noir blue-black */
+  --foreground: #cbd5e1;
+  --accent: #f43f5e;
+  background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
+  color: var(--foreground);
+}
+
+.theme-blueprint {
+  --background: #1e3a8a;
+  --foreground: #f8fafc;
+  --accent: #60a5fa;
+  background-color: #1e40af;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.theme-minimal {
+  /* Dossier / Aged Paper */
+  --background: #fdf6e3;
+  --foreground: #586e75;
+  --accent: #cb4b16;
+  background-color: #f7f1e3;
+  background-image:
+    radial-gradient(#d1ccc0 1px, transparent 1px),
+    linear-gradient(to right, #f7f1e3, #eee8d5);
+  background-size: 20px 20px;
+  position: relative;
+}
+
+/* Newspaper Clipping Aesthetic */
+.newspaper-clipping {
+  background-color: #f4f1ea;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 2px 2px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+  border: none !important;
+}
+
+.torn-edge {
+  clip-path: polygon(0% 2%, 5% 0%, 10% 2%, 15% 1%, 20% 3%, 25% 1%, 30% 2%, 35% 0%, 40% 2%, 45% 1%, 50% 3%, 55% 1%, 60% 2%, 65% 0%, 70% 2%, 75% 1%, 80% 3%, 85% 1%, 90% 2%, 95% 0%, 100% 2%,
+      100% 98%, 95% 100%, 90% 98%, 85% 99%, 80% 97%, 75% 99%, 70% 98%, 65% 100%, 60% 98%, 55% 99%, 50% 97%, 45% 99%, 40% 98%, 35% 100%, 30% 98%, 25% 100%, 20% 97%, 15% 99%, 10% 98%, 5% 100%, 0% 98%);
+}
+
+.newsprint-image {
+  filter: grayscale(1) contrast(1.2) brightness(0.9) sepia(0.2);
+  mix-blend-mode: multiply;
+}
+
+/* Sticky Note Paper Effects */
+.sticky-note-paper {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+  background-size: 3px 3px;
+  filter: contrast(1.1);
+}
+
+.paper-depth-shadow {
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3)) drop-shadow(0 8px 15px rgba(0, 0, 0, 0.2));
+}
+
+.paper-depth-shadow-selected {
+  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.3)) drop-shadow(0 20px 30px rgba(0, 0, 0, 0.25));
+}
+
+.curled-corner::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  width: 50%;
+  height: 15px;
+  background: rgba(0, 0, 0, 0.15);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  transform: rotate(2deg);
+  z-index: -1;
+  border-radius: 10px;
+}
+
+.curled-corner::before {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 6px;
+  width: 50%;
+  height: 15px;
+  background: rgba(0, 0, 0, 0.15);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  transform: rotate(-2deg);
+  z-index: -1;
+  border-radius: 10px;
+}
+
+/* Red Thumb Tack / Pin */
+.thumb-tack {
+  width: 14px;
+  height: 14px;
+  background-color: #ef4444;
+  /* Red pin */
+  border-radius: 50%;
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.4),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.4);
+}
+
+.thumb-tack::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background: white;
+  border-radius: 50%;
+  opacity: 0.8;
+  filter: blur(0.5px);
+  transform: translate(-3px, -3px);
+}
+
+.hand-cut {
+  clip-path: polygon(1% 1%, 15% 0%, 35% 2%, 55% 0%, 75% 1%, 98% 3%,
+      100% 25%, 97% 50%, 100% 75%, 98% 98%,
+      75% 100%, 50% 97%, 25% 100%, 2% 99%,
+      0% 75%, 3% 50%, 0% 25%);
+}
+
+/* Polaroid Evidence Aesthetic */
+.polaroid-frame {
+  background-color: #f8f8f2;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    0 10px 20px rgba(0, 0, 0, 0.1),
+    inset 0 0 10px rgba(0, 0, 0, 0.05);
+  border: none !important;
+}
+
+.evidence-photo {
+  filter: sepia(0.2) contrast(1.1) brightness(0.95) grayscale(0.1);
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Red String Aesthetics */
+@keyframes string-jitter {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(0.2px, -0.2px) scaleX(1.001);
+  }
+
+  50% {
+    transform: translate(-0.2px, 0.1px);
+  }
+
+  75% {
+    transform: translate(0.1px, -0.1px) scaleX(0.999);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+.string-texture {
+  filter: url('#yarn-texture') drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.4));
+}
+
+.string-jitter {
+  animation: string-jitter 4s ease-in-out infinite alternate;
+}
+
+/* Investigation Progress Bar */
+@keyframes string-jitter-old {
+
+  /* Renamed to avoid conflict */
+  0% {
+    transform: translateY(0) scaleX(1);
+  }
+
+  25% {
+    transform: translateY(-0.5px) scaleX(1.002);
+  }
+
+  50% {
+    transform: translateY(0.5px) scaleX(0.998);
+  }
+
+  75% {
+    transform: translateY(-0.3px) scaleX(1.001);
+  }
+
+  100% {
+    transform: translateY(0) scaleX(1);
+  }
+}
+
+.investigation-track {
+  background-color: #e5e7eb;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.red-string {
+  background-color: #ef4444;
+  box-shadow: 0 1px 2px rgba(239, 68, 68, 0.4);
+  animation: string-jitter 0.4s infinite ease-in-out;
+  position: relative;
+}
+
+.red-string::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background-size: 200% 100%;
+  animation: move-glint 2s linear infinite;
+}
+
+@keyframes move-glint {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* Global Transition */
+body {
+  transition: background-color 0.5s ease-in-out, color 0.5s ease-in-out;
+}
+
+/* Vignette Effect for Noir */
+.theme-noir::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.4) 100%);
+  pointer-events: none;
+  z-index: 10;
 }
