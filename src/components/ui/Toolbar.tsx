@@ -127,7 +127,16 @@ const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
         event.target.value = '';
     };
 
+    const theme = useStore((state) => state.theme);
+    const setTheme = useStore((state) => state.setTheme);
+
     const colors = ['#fef3c7', '#fca5a5', '#99f6e4', '#bfdbfe', '#bbf7d0'];
+    const themes = [
+        { id: 'theme-cork', name: 'Cork', color: '#a1887f' },
+        { id: 'theme-noir', name: 'Noir', color: '#0f172a' },
+        { id: 'theme-blueprint', name: 'Blueprint', color: '#1e3a8a' },
+        { id: 'theme-minimal', name: 'Minimal', color: '#f7f1e3' },
+    ];
 
     return (
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm border border-gray-200 p-2 rounded-xl shadow-xl flex gap-2 z-50 pointer-events-auto items-center text-gray-900">
@@ -142,6 +151,19 @@ const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
                     />
                 ))}
             </div>
+
+            <div className="flex gap-1 mr-2 border-r border-gray-300 pr-2">
+                {themes.map((t) => (
+                    <button
+                        key={t.id}
+                        onClick={() => setTheme(t.id)}
+                        className={`w-5 h-5 rounded-full border border-gray-300 transition-transform ${theme === t.id ? 'scale-125 border-gray-400 ring-2 ring-offset-1 ring-blue-400' : 'hover:scale-110'}`}
+                        style={{ backgroundColor: t.color }}
+                        title={t.name}
+                    />
+                ))}
+            </div>
+
             <button onClick={addSticky} className="px-4 py-2 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors text-gray-700">Sticky</button>
             <button onClick={addText} className="px-4 py-2 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors text-gray-700">Text</button>
             <button onClick={addImage} className="px-4 py-2 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors text-gray-700">Image</button>
