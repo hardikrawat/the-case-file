@@ -17,6 +17,8 @@ const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
     const setEdges = useStore((state) => state.setEdges);
     const connectMode = useStore((state) => state.connectMode);
     const toggleConnectMode = useStore((state) => state.toggleConnectMode);
+    const setTheme = useStore((state) => state.setTheme);
+    const theme = useStore((state) => state.theme);
     const { project } = useReactFlow();
 
     if (isReadOnly) return null;
@@ -127,8 +129,7 @@ const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
         event.target.value = '';
     };
 
-    const theme = useStore((state) => state.theme);
-    const setTheme = useStore((state) => state.setTheme);
+
 
     const colors = ['#fef3c7', '#fca5a5', '#99f6e4', '#bfdbfe', '#bbf7d0'];
     const themes = [
