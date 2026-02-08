@@ -45,7 +45,17 @@ export async function GET(req: Request) {
     }
 
     try {
-        const userBoards = await db.select().from(boards).where(eq(boards.userId, session.user.id)).orderBy(boards.updatedAt);
+        const userBoards = await db.select({
+            id: boards.id,
+            title: boards.title,
+            isPublic: boards.isPublic,
+            thumbnail: boards.thumbnail,
+            stars: boards.stars,
+            views: boards.views,
+            createdAt: boards.createdAt,
+            updatedAt: boards.updatedAt,
+            parentId: boards.parentId,
+        }).from(boards).where(eq(boards.userId, session.user.id)).orderBy(boards.updatedAt);
         return NextResponse.json(userBoards);
     } catch (error) {
         console.error('Error fetching boards:', error);
