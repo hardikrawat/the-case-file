@@ -5,6 +5,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import AppleSpinner from '@/components/ui/AppleSpinner';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -89,7 +90,14 @@ export default function LoginPage() {
                 </div>
 
                 {/* Login Card */}
-                <div className="bg-[#1c1917] border border-stone-800 p-8 shadow-2xl relative">
+                <div className="bg-[#1c1917] border border-stone-800 p-8 shadow-2xl relative overflow-hidden">
+                    {/* Loading Overlay */}
+                    {isLoading && (
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 animate-in fade-in duration-200">
+                            <AppleSpinner size="lg" label="Verifying clearance..." />
+                        </div>
+                    )}
+
                     {/* "Top Secret" Stamp */}
                     <div className="absolute -top-6 -right-6 border-4 border-stone-700/30 p-2 transform rotate-12 pointer-events-none">
                         <span className="text-stone-700/30 font-black text-xl uppercase">RESTRICTED</span>
@@ -151,9 +159,16 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full py-3 px-4 bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold uppercase tracking-widest border border-stone-600 hover:border-amber-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:translate-y-0.5"
+                            className="w-full py-3 px-4 bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold uppercase tracking-widest border border-stone-600 hover:border-amber-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:translate-y-0.5 flex items-center justify-center gap-2"
                         >
-                            {isLoading ? 'Verifying...' : 'Access System'}
+                            {isLoading ? (
+                                <>
+                                    <AppleSpinner size="sm" />
+                                    <span>Verifying Clearance...</span>
+                                </>
+                            ) : (
+                                'Access System'
+                            )}
                         </button>
                     </form>
 

@@ -53,10 +53,9 @@ export async function recordFailedAttempt(email: string): Promise<{
     const lockoutKey = `lockout:${email}`;
     const now = Date.now();
     const lockoutDuration = 30 * 60 * 1000; // 30 minutes
-
     const expiresAt = new Date(now + lockoutDuration);
 
-    await db.insert(rateLimits).values({
+    const res = await db.insert(rateLimits).values({
         key: lockoutKey,
         count: 1,
         expiresAt,
@@ -64,16 +63,13 @@ export async function recordFailedAttempt(email: string): Promise<{
         target: rateLimits.key,
         set: {
             count: sql`${rateLimits.count} + 1`,
-            expiresAt: sql`CASE WHEN ${rateLimits.expiresAt} < ${new Date(now).toISOString()} THEN ${expiresAt.toISOString()} ELSE ${rateLimits.expiresAt} END`
+            expiresAt: sql`CASE WHEN ${rateLimits.expiresAt} < ${now} THEN ${expiresAt.getTime()} ELSE ${rateLimits.expiresAt} END`
         }
+    }).returning({
+        count: rateLimits.count,
     });
 
-    const updatedRecord = await db.select()
-        .from(rateLimits)
-        .where(eq(rateLimits.key, lockoutKey))
-        .limit(1);
-
-    const count = updatedRecord[0]?.count || 1;
+    const count = res[0]?.count ?? 1;
     const shouldLock = count >= 5;
     return { shouldLock, attempts: count };
 }

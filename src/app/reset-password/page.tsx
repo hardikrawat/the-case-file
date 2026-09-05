@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import AppleSpinner from '@/components/ui/AppleSpinner';
 
 function ResetPasswordContent() {
     const router = useRouter();
@@ -102,7 +103,14 @@ function ResetPasswordContent() {
                 </div>
 
                 {/* Reset Password Card */}
-                <div className="bg-stone-900/50 backdrop-blur-sm border border-amber-900/30 rounded-xl p-8 shadow-2xl">
+                <div className="bg-stone-900/50 backdrop-blur-sm border border-amber-900/30 rounded-xl p-8 shadow-2xl relative overflow-hidden">
+                    {/* Loading Overlay */}
+                    {isLoading && (
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 animate-in fade-in duration-200">
+                            <AppleSpinner size="lg" label="Resetting password..." />
+                        </div>
+                    )}
+
                     <h2 className="text-2xl font-bold text-stone-200 mb-2">Set New Password</h2>
                     <p className="text-sm text-stone-400 mb-6">
                         Choose a strong password to secure your account.
@@ -162,9 +170,16 @@ function ResetPasswordContent() {
                         <button
                             type="submit"
                             disabled={isLoading || !isPasswordValid}
-                            className="w-full py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-semibold rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-semibold rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                            {isLoading ? 'Resetting...' : 'Reset Password'}
+                            {isLoading ? (
+                                <>
+                                    <AppleSpinner size="sm" />
+                                    <span>Resetting Password...</span>
+                                </>
+                            ) : (
+                                'Reset Password'
+                            )}
                         </button>
                     </form>
 
@@ -182,9 +197,7 @@ function ResetPasswordContent() {
 export default function ResetPasswordPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-stone-950 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
-            </div>
+            <AppleSpinner fullscreen size="xl" label="Verifying reset credentials..." />
         }>
             <ResetPasswordContent />
         </Suspense>

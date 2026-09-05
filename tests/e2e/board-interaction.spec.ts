@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures/auth.fixtures';
-import { mockBoardAPI, createMockBoard, navigateToBoard, addNode, saveBoard } from '../helpers/test-helpers';
+import { mockBoardAPI, createMockBoard, navigateToBoard, saveBoard } from '../helpers/test-helpers';
 
 test.describe('Board Interaction Tests - Enhanced', () => {
 

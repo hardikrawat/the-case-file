@@ -10,9 +10,7 @@ import { eq } from "drizzle-orm";
 import { comparePassword } from "@/lib/password";
 import { loginSchema } from "@/lib/validations/auth";
 
-import { headers } from "next/headers";
-
-const { handlers: internalHandlers, auth: internalAuth, signIn: internalSignIn, signOut: internalSignOut } = NextAuth({
+export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
     trustHost: true,
     adapter: DrizzleAdapter(db),
@@ -109,28 +107,3 @@ const { handlers: internalHandlers, auth: internalAuth, signIn: internalSignIn, 
         updateAge: 24 * 60 * 60, // 24 hours - refresh session token
     },
 });
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const auth: any = async (...args: any[]) => {
-    try {
-        const headerList = await headers();
-        if (headerList.get('x-test-bypass') === 'true') {
-            return {
-                user: {
-                    id: 'test-user-123',
-                    email: 'test@example.com',
-                    name: 'Test Detective'
-                },
-                expires: new Date(Date.now() + 86400000).toISOString()
-            };
-        }
-    } catch {
-        // Ignore error if headers() is called outside of request context
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (internalAuth as any)(...args);
-};
-
-export const handlers = internalHandlers;
-export const signIn = internalSignIn;
-export const signOut = internalSignOut;

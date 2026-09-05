@@ -1,5 +1,5 @@
-import { Sidebar } from "@/components/dashboard/Sidebar";
 import { RightPanel } from "@/components/dashboard/RightPanel";
+import { DashboardShell } from "@/components/dashboard/DashboardShell";
 
 export default function DashboardLayout({
     children,
@@ -7,14 +7,8 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="flex h-screen font-sans bg-background text-foreground transition-colors duration-500">
-            <Sidebar />
-            <div className="flex-1 flex overflow-hidden">
-                <main className="flex-1 overflow-y-auto no-scrollbar p-6">
-                    {children}
-                </main>
-                <RightPanel />
-            </div>
-        </div>
+        <DashboardShell rightPanel={<RightPanel />}>
+            {children}
+        </DashboardShell>
     );
 }

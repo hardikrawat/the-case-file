@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures/auth.fixtures';
-import { mockBoardAPI, createMockBoard } from '../helpers/test-helpers';
+import { createMockBoard } from '../helpers/test-helpers';
 
 test.describe('Dashboard Integration', () => {
     test.beforeEach(async ({ authenticatedPage: page }) => {
@@ -8,7 +8,7 @@ test.describe('Dashboard Integration', () => {
         const board1 = createMockBoard({ id: '1', title: 'Board One', isPublic: true });
         const board2 = createMockBoard({ id: '2', title: 'Board Two', isPublic: true });
 
-        let boards = [board1, board2];
+        const boards = [board1, board2];
 
         await page.route('**/api/boards**', async route => {
             if (route.request().method() === 'GET' && !route.request().url().includes('new-board-id')) {
@@ -18,8 +18,8 @@ test.describe('Dashboard Integration', () => {
                     body: JSON.stringify(boards)
                 });
             } else if (route.request().method() === 'POST') {
-                const newBoard = { id: 'new-board-id', title: 'E2E Test Case', isPublic: false };
-                boards.push(newBoard as any);
+                const newBoard = createMockBoard({ id: 'new-board-id', title: 'E2E Test Case', isPublic: false });
+                boards.push(newBoard);
                 await route.fulfill({
                     status: 201,
                     contentType: 'application/json',

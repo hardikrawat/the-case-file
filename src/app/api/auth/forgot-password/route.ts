@@ -26,23 +26,13 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const token = await createPasswordResetToken(email);
+        // Create reset token if user exists (persisted in DB; dispatched out-of-band via email)
+        await createPasswordResetToken(email);
 
-        if (!token) {
-            // Don't reveal if email exists or not for security
-            return NextResponse.json({
-                success: true,
-                message: 'If an account exists with this email, a password reset link has been sent',
-            });
-        }
-
-        // TODO: Send email with reset link
-        // For now, return token in response for testing
+        // Always return generic success message to prevent user enumeration and token leakage
         return NextResponse.json({
             success: true,
-            message: 'Password reset link sent',
-            // TODO: Remove in production
-            resetToken: token,
+            message: 'If an account exists with this email, a password reset link has been sent',
         });
 
     } catch (error) {

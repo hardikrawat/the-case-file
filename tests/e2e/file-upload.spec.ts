@@ -14,8 +14,6 @@ test.describe('File Upload', () => {
             });
         });
 
-        // Toggle file chooser
-        const fileChooserPromise = page.waitForEvent('filechooser');
         // The input is hidden under the dropzone, we can click the dropzone or the hidden input
         await page.locator('#file-upload').setInputFiles({
             name: 'test-avatar.png',

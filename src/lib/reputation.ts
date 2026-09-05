@@ -7,6 +7,7 @@ export type ReputationAction =
     | 'board_made_public'
     | 'board_shared'
     | 'comment_posted'
+    | 'contribution_accepted'
     | 'profile_completed';
 
 const POINTS: Record<ReputationAction, number> = {
@@ -14,8 +15,11 @@ const POINTS: Record<ReputationAction, number> = {
     board_made_public: 5,
     board_shared: 3,
     comment_posted: 2,
+    contribution_accepted: 25,
     profile_completed: 15,
 };
+
+export { getRankTitle } from './ranks';
 
 /**
  * Award points to a user for an action
@@ -32,11 +36,19 @@ export async function awardPoints(userId: string, action: ReputationAction): Pro
 
         if (existing.length > 0) {
             // Update existing record
+            const setValues: Record<string, unknown> = {
+                points: sql`${userReputation.points} + ${points}`,
+                lastUpdated: new Date(),
+            };
+            if (action === 'board_created') {
+                setValues.boardsCreated = sql`${userReputation.boardsCreated} + 1`;
+            }
+            if (action === 'contribution_accepted') {
+                setValues.contributionsAccepted = sql`${userReputation.contributionsAccepted} + 1`;
+            }
+
             const updated = await db.update(userReputation)
-                .set({
-                    points: sql`${userReputation.points} + ${points}`,
-                    lastUpdated: new Date(),
-                })
+                .set(setValues)
                 .where(eq(userReputation.userId, userId))
                 .returning();
 
@@ -51,7 +63,8 @@ export async function awardPoints(userId: string, action: ReputationAction): Pro
             const created = await db.insert(userReputation).values({
                 userId,
                 points,
-                boardsCreated: userBoards.length,
+                boardsCreated: userBoards.length + (action === 'board_created' ? 1 : 0),
+                contributionsAccepted: action === 'contribution_accepted' ? 1 : 0,
                 lastUpdated: new Date(),
             }).returning();
 

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { X, Lock, Globe } from "lucide-react";
 import { useRouter } from "next/navigation";
-import ProgressBar from "@/components/ui/ProgressBar";
+import AppleSpinner from "@/components/ui/AppleSpinner";
 
 interface NewBoardModalProps {
     isOpen: boolean;
@@ -103,9 +103,14 @@ export function NewBoardModal({ isOpen, onClose }: NewBoardModalProps) {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-[var(--sidebar-accent)] hover:bg-[var(--sidebar-accent)]/90 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--sidebar-accent-foreground)] font-bold py-3.5 rounded-lg transition-all shadow-lg shadow-[var(--sidebar-accent)]/20 flex flex-col items-center justify-center gap-2 uppercase tracking-[0.2em] text-xs"
+                            className="w-full bg-[var(--sidebar-accent)] hover:bg-[var(--sidebar-accent)]/90 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--sidebar-accent-foreground)] font-bold py-3.5 rounded-lg transition-all shadow-lg shadow-[var(--sidebar-accent)]/20 flex items-center justify-center gap-2 uppercase tracking-[0.2em] text-xs"
                         >
-                            {loading ? <ProgressBar isIndeterminate label="Initializing Intelligence..." className="max-w-[150px]" /> : "Initialize Case File"}
+                            {loading ? (
+                                <>
+                                    <AppleSpinner size="sm" />
+                                    <span>Initializing Intelligence...</span>
+                                </>
+                            ) : "Initialize Case File"}
                         </button>
                     </div>
                 </form>

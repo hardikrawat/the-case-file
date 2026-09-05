@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { searchDatabase } from '@/lib/search';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
     try {
         const session = await auth();
+        const identifier = session?.user?.id || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
+        const rateLimit = await checkRateLimit(`search:${identifier}`, 30, 60000);
+        if (!rateLimit.success) {
+            return NextResponse.json({ error: 'Too many requests. Please wait.' }, { status: 429 });
+        }
+
         const { searchParams } = new URL(req.url);
         const query = searchParams.get('q');
 

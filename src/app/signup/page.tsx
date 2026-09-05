@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { signIn } from 'next-auth/react';
+import AppleSpinner from '@/components/ui/AppleSpinner';
 
 export default function SignupPage() {
     const router = useRouter();
@@ -78,7 +79,7 @@ export default function SignupPage() {
             }
 
             toast.success('Agent registered. Verification required.');
-            router.push(`/signup/verify?email=${encodeURIComponent(formData.email)}&token=${data.verificationToken}`);
+            router.push(`/signup/verify?email=${encodeURIComponent(formData.email)}`);
         } catch {
             toast.error('System error. Contact HQ.');
         } finally {
@@ -114,7 +115,14 @@ export default function SignupPage() {
                 </div>
 
                 {/* Form Card */}
-                <div className="bg-[#1c1917] border border-stone-800 p-8 shadow-2xl relative">
+                <div className="bg-[#1c1917] border border-stone-800 p-8 shadow-2xl relative overflow-hidden">
+                    {/* Loading Overlay */}
+                    {isLoading && (
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 animate-in fade-in duration-200">
+                            <AppleSpinner size="lg" label="Registering operative..." />
+                        </div>
+                    )}
+
                     {/* Corner Brackets */}
                     <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-amber-800/50"></div>
                     <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-amber-800/50"></div>
@@ -211,9 +219,16 @@ export default function SignupPage() {
                         <button
                             type="submit"
                             disabled={isLoading || !isPasswordValid}
-                            className="w-full py-3 px-4 bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold uppercase tracking-widest border border-stone-600 hover:border-amber-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:translate-y-0.5"
+                            className="w-full py-3 px-4 bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold uppercase tracking-widest border border-stone-600 hover:border-amber-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:translate-y-0.5 flex items-center justify-center gap-2"
                         >
-                            {isLoading ? 'Processing...' : 'Submit Profile'}
+                            {isLoading ? (
+                                <>
+                                    <AppleSpinner size="sm" />
+                                    <span>Registering Operative...</span>
+                                </>
+                            ) : (
+                                'Submit Profile'
+                            )}
                         </button>
                     </form>
 

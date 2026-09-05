@@ -2,17 +2,40 @@ import React, { memo, useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { twMerge } from 'tailwind-merge';
-import { Globe, ExternalLink } from 'lucide-react';
+import { Globe, ExternalLink, Trash2 } from 'lucide-react';
 import useStore from '@/store/useStore';
-import ProgressBar from '@/components/ui/ProgressBar';
+import AppleSpinner from '@/components/ui/AppleSpinner';
+import { useIsReadOnly } from '@/context/ReadOnlyContext';
 
 const ArticleNode = ({ id, data, selected }: NodeProps) => {
     const updateNodeData = useStore((state) => state.updateNodeData);
+    const readOnlyContext = useIsReadOnly();
+    const isReadOnly = Boolean(data?.isReadOnly ?? readOnlyContext);
     const [isLoading, setIsLoading] = useState(false);
     const [urlInput, setUrlInput] = useState(data.url || '');
+    const titleRef = React.useRef(data.title);
+    titleRef.current = data.title;
+
+    const dateStr = React.useMemo(() => {
+        if (data?.date) {
+            try {
+                return new Date(data.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+            } catch {
+                // fallback
+            }
+        }
+        return 'Special Edition';
+    }, [data?.date]);
 
     // Slight random rotation for "pinned" effect
-    const rotation = React.useMemo(() => (Math.random() * 2 - 1).toFixed(2), []);
+    const rotation = React.useMemo(() => {
+        let hash = 0;
+        for (let i = 0; i < id.length; i++) {
+            hash = ((hash << 5) - hash) + id.charCodeAt(i);
+            hash |= 0;
+        }
+        return ((hash % 400) / 100).toFixed(2);
+    }, [id]);
 
     // Fetch preview data
     const fetchPreview = useCallback(async (url: string) => {
@@ -25,7 +48,7 @@ const ArticleNode = ({ id, data, selected }: NodeProps) => {
 
             if (response.ok) {
                 updateNodeData(id, {
-                    title: data.title || preview.title,
+                    title: titleRef.current || preview.title,
                     image: preview.image,
                     description: preview.description
                 });
@@ -35,17 +58,19 @@ const ArticleNode = ({ id, data, selected }: NodeProps) => {
         } finally {
             setIsLoading(false);
         }
-    }, [id, data.title, updateNodeData]);
+    }, [id, updateNodeData]);
 
     useEffect(() => {
-        if (data.url && !data.image && !isLoading) {
+        if (data.url && !data.image) {
             fetchPreview(data.url);
         }
-    }, [data.url, data.image, fetchPreview, isLoading]);
+    }, [data.url, data.image, fetchPreview]);
+
+    const isTypingRef = React.useRef(false);
 
     // Sync local input with store (important for rehydration)
     useEffect(() => {
-        if (data.url && data.url !== urlInput) {
+        if (!isTypingRef.current && data.url && data.url !== urlInput) {
             setUrlInput(data.url);
         }
     }, [data.url, urlInput]);
@@ -55,19 +80,15 @@ const ArticleNode = ({ id, data, selected }: NodeProps) => {
         const timer = setTimeout(() => {
             if (urlInput !== data.url) {
                 updateNodeData(id, { url: urlInput });
-                // We don't fetch here; the reactive useEffect above will catch it 
-                // once the store updates data.url
             }
         }, 1000);
         return () => clearTimeout(timer);
     }, [urlInput, data.url, id, updateNodeData]);
 
     const handleTitleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
-        if (data.isReadOnly) return;
+        if (isReadOnly) return;
         updateNodeData(id, { title: evt.target.value });
     };
-
-    const isReadOnly = data.isReadOnly;
 
     return (
         <div
@@ -75,10 +96,28 @@ const ArticleNode = ({ id, data, selected }: NodeProps) => {
             className={twMerge(
                 'relative w-72 transition-all duration-300 ease-in-out',
                 selected && 'scale-[1.02]',
-                'group',
-                isReadOnly ? 'pointer-events-none' : ''
+                'group'
             )}
         >
+            {/* Delete button */}
+            {!isReadOnly && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        useStore.getState().deleteNode(id);
+                    }}
+                    aria-label="Delete Node"
+                    data-testid="delete-node"
+                    title="Delete Node"
+                    className={twMerge(
+                        'absolute -top-2 -right-2 z-50 p-1 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-md transition-all duration-200 pointer-events-auto',
+                        selected ? 'opacity-100 scale-100' : 'opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100'
+                    )}
+                >
+                    <Trash2 size={12} />
+                </button>
+            )}
+
             {/* Background / Shape Layer (Clipped) */}
             <div
                 className={twMerge(
@@ -95,11 +134,11 @@ const ArticleNode = ({ id, data, selected }: NodeProps) => {
                 {/* Header / Masthead Style */}
                 <div className="px-3 pt-4 pb-2 border-b border-black/10 text-center">
                     <p className="text-[10px] font-serif uppercase tracking-[0.2em] text-stone-500 mb-1">
-                        Special Report • {new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                        Special Report • {dateStr}
                     </p>
                     <input
                         className={twMerge(
-                            "font-serif font-black text-stone-900 bg-transparent border-none focus:outline-none placeholder-stone-400 text-xl text-center leading-tight tracking-tight px-0 mb-4",
+                            "font-serif font-black text-stone-900 bg-transparent border-none focus:outline-none placeholder-stone-400 text-xl text-center leading-tight tracking-tight px-0 mb-4 nodrag",
                             isReadOnly ? "cursor-default" : ""
                         )}
                         style={{ fontVariantCaps: 'small-caps' }}
@@ -115,12 +154,15 @@ const ArticleNode = ({ id, data, selected }: NodeProps) => {
                 <div className="px-4 py-2">
                     <div className="aspect-[4/3] bg-stone-300/30 flex items-center justify-center relative overflow-hidden border border-black/5 shadow-inner">
                         {isLoading ? (
-                            <ProgressBar isIndeterminate label="Extracting..." className="max-w-[120px]" />
+                            <div className="flex flex-col items-center gap-1.5 p-2">
+                                <AppleSpinner size="sm" className="text-stone-700" />
+                                <span className="text-[10px] font-mono text-stone-600">Extracting...</span>
+                            </div>
                         ) : data.image ? (
                             <div className="relative w-full h-full newsprint-image opacity-80">
                                 <Image
                                     src={data.image}
-                                    alt={data.title}
+                                    alt={data.title || 'Article preview'}
                                     fill
                                     className="object-cover"
                                     unoptimized
@@ -146,10 +188,18 @@ const ArticleNode = ({ id, data, selected }: NodeProps) => {
                         <div className="flex items-center gap-2 text-[10px] text-stone-400">
                             <Globe size={10} />
                             <input
-                                className="w-full bg-transparent border-none focus:outline-none truncate font-mono tracking-tight"
+                                className="w-full bg-transparent border-none focus:outline-none truncate font-mono tracking-tight nodrag"
                                 placeholder={isReadOnly ? "" : "https://example.com"}
                                 value={urlInput}
-                                onChange={(e) => !isReadOnly && setUrlInput(e.target.value)}
+                                onChange={(e) => {
+                                    if (!isReadOnly) {
+                                        isTypingRef.current = true;
+                                        setUrlInput(e.target.value);
+                                    }
+                                }}
+                                onBlur={() => {
+                                    isTypingRef.current = false;
+                                }}
                                 onKeyDown={(evt) => evt.stopPropagation()}
                                 readOnly={isReadOnly}
                             />
@@ -179,9 +229,9 @@ const ArticleNode = ({ id, data, selected }: NodeProps) => {
             />
             <Handle
                 type="source"
-                position={Position.Top}
+                position={Position.Bottom}
                 id="source"
-                className="size-3 -top-1 left-1/2 -translate-x-1/2 bg-stone-800 border-none z-50 rounded-full opacity-0 group-hover:opacity-100"
+                className="size-3 -bottom-1 left-1/2 -translate-x-1/2 bg-stone-800 border-none z-50 rounded-full opacity-0 group-hover:opacity-100"
             />
         </div>
     );

@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { Board, BoardContent } from "@/lib/types";
-import { Clock, Copy, Globe, Lock, Cpu, Loader2, User } from "lucide-react";
+import { Clock, Copy, Globe, Lock, Cpu, User } from "lucide-react";
 import BoardPreview, { PreviewEdge, PreviewNode } from "./BoardPreview";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+
+import AppleSpinner from "@/components/ui/AppleSpinner";
 
 interface BoardCardProps {
     board: Board;
@@ -55,8 +57,8 @@ const BoardCard = ({ board }: BoardCardProps) => {
             {/* Preview Area */}
             <div className="relative aspect-video w-full bg-[var(--background)] overflow-hidden border-b border-panel-border group-hover:opacity-100 transition-opacity">
                 {isLoadingPreview ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-[var(--background)]/50">
-                        <Loader2 className="w-6 h-6 animate-spin text-sidebar-accent/50" />
+                    <div className="absolute inset-0 flex items-center justify-center bg-[var(--background)]/60 backdrop-blur-sm">
+                        <AppleSpinner size="md" className="text-sidebar-accent" />
                     </div>
                 ) : (
                     <>

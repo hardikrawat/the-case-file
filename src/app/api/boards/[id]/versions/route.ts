@@ -1,9 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db } from '@/lib/db';
-import { boardVersions, boards, boardCollaborators } from '@/lib/schema';
-import { eq, and } from 'drizzle-orm';
+import { boardVersions, users } from '@/lib/schema';
+import { eq, desc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { getBoardAccess } from '@/lib/auth-checks';
+import { checkRateLimit } from '@/lib/rate-limit';
+
+import { z } from 'zod';
+
+const createVersionSchema = z.object({
+    content: z.union([z.record(z.string(), z.unknown()), z.string()]),
+    notes: z.string().max(500, 'Notes cannot exceed 500 characters').optional(),
+    title: z.string().max(120).optional(),
+    isManual: z.boolean().optional().default(true),
+});
+
+const MAX_VERSION_SIZE_BYTES = 5 * 1024 * 1024; // 5MB payload limit
 
 // GET /api/boards/[id]/versions
 export async function GET(
@@ -12,46 +25,75 @@ export async function GET(
 ) {
     try {
         const params = await props.params;
+        if (!params.id || typeof params.id !== 'string') {
+            return NextResponse.json({ error: 'Valid board ID is required' }, { status: 400 });
+        }
+
         const session = await auth();
         if (!session?.user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Check if user has access to view versions (owner or collaborator)
-        const board = await db.select()
-            .from(boards)
-            .where(eq(boards.id, params.id))
-            .limit(1);
+        const rateLimit = await checkRateLimit(`versions:${session.user.id}`, 30, 60000);
+        if (!rateLimit.success) {
+            return NextResponse.json({ error: 'Too many requests. Please wait.' }, { status: 429 });
+        }
 
-        if (board.length === 0) {
+        // Check if user has access to view versions (owner or collaborator)
+        const access = await getBoardAccess(params.id, session.user.id);
+        if (!access.board) {
             return NextResponse.json({ error: 'Board not found' }, { status: 404 });
         }
 
-        const isOwner = board[0].userId === session.user.id;
-
-        if (!isOwner) {
-            // Check if collaborator
-            const collab = await db.select()
-                .from(boardCollaborators)
-                .where(
-                    and(
-                        eq(boardCollaborators.boardId, params.id),
-                        eq(boardCollaborators.userId, session.user.id)
-                    )
-                )
-                .limit(1);
-
-            if (collab.length === 0) {
-                return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-            }
+        if (!access.canView) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        const versions = await db.select()
-            .from(boardVersions)
-            .where(eq(boardVersions.boardId, params.id))
-            .orderBy(boardVersions.createdAt);
+        const { searchParams } = new URL(req.url);
+        const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50', 10)));
+        const offset = Math.max(0, parseInt(searchParams.get('offset') || '0', 10));
 
-        return NextResponse.json(versions);
+        // Order descending so index 0 is the newest (Latest) version, joined with author details
+        const versions = await db.select({
+            id: boardVersions.id,
+            boardId: boardVersions.boardId,
+            content: boardVersions.content,
+            createdBy: boardVersions.createdBy,
+            createdAt: boardVersions.createdAt,
+            creatorName: users.name,
+            creatorImage: users.image,
+        })
+            .from(boardVersions)
+            .leftJoin(users, eq(boardVersions.createdBy, users.id))
+            .where(eq(boardVersions.boardId, params.id))
+            .orderBy(desc(boardVersions.createdAt))
+            .limit(limit)
+            .offset(offset);
+
+        const mapped = versions.map((v) => {
+            let notes: string | null = null;
+            let isManual = false;
+            let parsedContent = v.content;
+            if (typeof v.content === 'string') {
+                try {
+                    parsedContent = JSON.parse(v.content);
+                } catch {
+                    parsedContent = {};
+                }
+            }
+            if (parsedContent && typeof parsedContent === 'object' && '_metadata' in (parsedContent as Record<string, unknown>)) {
+                const meta = (parsedContent as Record<string, unknown>)._metadata as Record<string, unknown>;
+                notes = typeof meta?.notes === 'string' ? meta.notes : null;
+                isManual = Boolean(meta?.isManual);
+            }
+            return {
+                ...v,
+                notes,
+                isManual,
+            };
+        });
+
+        return NextResponse.json(mapped);
     } catch (error) {
         console.error('Get versions error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -65,56 +107,91 @@ export async function POST(
 ) {
     try {
         const params = await props.params;
+        if (!params.id || typeof params.id !== 'string') {
+            return NextResponse.json({ error: 'Valid board ID is required' }, { status: 400 });
+        }
+
         const session = await auth();
         if (!session?.user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Check if user can create versions (owner or editor)
-        const board = await db.select()
-            .from(boards)
-            .where(eq(boards.id, params.id))
-            .limit(1);
+        const rateLimit = await checkRateLimit(`versions:${session.user.id}`, 30, 60000);
+        if (!rateLimit.success) {
+            return NextResponse.json({ error: 'Too many requests. Please wait.' }, { status: 429 });
+        }
 
-        if (board.length === 0) {
+        // Check if user can create versions (owner or editor)
+        const access = await getBoardAccess(params.id, session.user.id);
+        if (!access.board) {
             return NextResponse.json({ error: 'Board not found' }, { status: 404 });
         }
 
-        const isOwner = board[0].userId === session.user.id;
+        if (!access.canEdit) {
+            return NextResponse.json({ error: 'Forbidden: Only owners and editors can create versions' }, { status: 403 });
+        }
 
-        if (!isOwner) {
-            // Check if editor collaborator
-            const collab = await db.select()
-                .from(boardCollaborators)
-                .where(
-                    and(
-                        eq(boardCollaborators.boardId, params.id),
-                        eq(boardCollaborators.userId, session.user.id)
-                    )
-                )
-                .limit(1);
+        const rawBodyText = await req.text();
+        if (rawBodyText.length > MAX_VERSION_SIZE_BYTES) {
+            return NextResponse.json({ error: 'Version payload exceeds maximum allowed size (5MB)' }, { status: 413 });
+        }
 
-            if (collab.length === 0 || (collab[0].role !== 'editor' && collab[0].role !== 'owner')) {
-                return NextResponse.json({ error: 'Forbidden: Only owners and editors can create versions' }, { status: 403 });
+        let body: unknown;
+        try {
+            body = JSON.parse(rawBodyText);
+        } catch {
+            return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+        }
+
+        const validationResult = createVersionSchema.safeParse(body);
+        if (!validationResult.success) {
+            const errors = validationResult.error.issues.map((err) => ({
+                field: err.path.join('.'),
+                message: err.message,
+            }));
+            return NextResponse.json({ error: 'Invalid input', details: errors }, { status: 400 });
+        }
+
+        const { content, notes, title, isManual } = validationResult.data;
+
+        let contentObj = content;
+        if (typeof content === 'string') {
+            try {
+                contentObj = JSON.parse(content);
+            } catch {
+                contentObj = { raw: content };
             }
         }
 
-        const body = await req.json();
-        const { content } = body;
+        // Strip HTML/script tags from notes for stored XSS protection
+        const rawNote = (notes || title || '').toString();
+        const noteStr = rawNote.replace(/<[^>]*>?/gm, '').trim().slice(0, 500);
 
-        if (!content) {
-            return NextResponse.json({ error: 'Content is required' }, { status: 400 });
+        if (noteStr || isManual !== undefined) {
+            contentObj = {
+                ...(typeof contentObj === 'object' && contentObj !== null ? contentObj : {}),
+                _metadata: {
+                    notes: noteStr || undefined,
+                    isManual: Boolean(isManual),
+                }
+            };
         }
 
         const newVersion = await db.insert(boardVersions).values({
             id: createId(),
             boardId: params.id,
-            content,
+            content: contentObj as Record<string, unknown>,
             createdBy: session.user.id,
             createdAt: new Date(),
         }).returning();
 
-        return NextResponse.json(newVersion[0], { status: 201 });
+        return NextResponse.json({
+            ...newVersion[0],
+            notes: noteStr || null,
+            isManual: Boolean(isManual),
+            creatorName: session.user.name,
+            creatorImage: session.user.image,
+        }, { status: 201 });
     } catch (error) {
         console.error('Create version error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

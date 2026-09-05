@@ -34,6 +34,11 @@ vi.mock('@paralleldrive/cuid2', () => ({
     createId: vi.fn().mockReturnValue('board-123'),
 }));
 
+// Mock rate-limit
+vi.mock('@/lib/rate-limit', () => ({
+    checkRateLimit: vi.fn().mockResolvedValue({ success: true, reset: Date.now() + 60000 }),
+}));
+
 describe('/api/boards', () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -45,7 +50,7 @@ describe('/api/boards', () => {
 
     describe('POST', () => {
         it('should return 401 if not authenticated', async () => {
-            vi.mocked(auth).mockResolvedValue(null);
+            vi.mocked(auth).mockResolvedValue(null as any);
             const req = createRequest();
             const response = await POST(req) as any;
             expect(response.status).toBe(401);
@@ -88,7 +93,7 @@ describe('/api/boards', () => {
 
     describe('GET', () => {
         it('should return 401 if not authenticated', async () => {
-            vi.mocked(auth).mockResolvedValue(null);
+            vi.mocked(auth).mockResolvedValue(null as any);
             const req = createRequest();
             const response = await GET() as any;
             expect(response.status).toBe(401);
@@ -103,8 +108,7 @@ describe('/api/boards', () => {
                 orderBy: vi.fn().mockResolvedValue([{ id: 'board-1', title: 'Case 1' }]),
             });
 
-            const req = createRequest();
-            const response = await GET(req) as any;
+            const response = await GET() as any;
 
             expect(response.status).toBe(200);
             expect(response.data).toHaveLength(1);
@@ -115,8 +119,7 @@ describe('/api/boards', () => {
             vi.mocked(auth).mockResolvedValue({ user: { id: 'user-123' } } as any);
             (db.select as any).mockImplementationOnce(() => { throw new Error('DB Error') });
 
-            const req = createRequest();
-            const response = await GET(req) as any;
+            const response = await GET() as any;
 
             expect(response.status).toBe(500);
         });

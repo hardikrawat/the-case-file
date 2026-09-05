@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import AppleSpinner from '@/components/ui/AppleSpinner';
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
@@ -75,7 +76,14 @@ export default function ForgotPasswordPage() {
                 </div>
 
                 {/* Forgot Password Card */}
-                <div className="bg-stone-900/50 backdrop-blur-sm border border-amber-900/30 rounded-xl p-8 shadow-2xl">
+                <div className="bg-stone-900/50 backdrop-blur-sm border border-amber-900/30 rounded-xl p-8 shadow-2xl relative overflow-hidden">
+                    {/* Loading Overlay */}
+                    {isLoading && (
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 animate-in fade-in duration-200">
+                            <AppleSpinner size="lg" label="Transmitting signal..." />
+                        </div>
+                    )}
+
                     <h2 className="text-2xl font-bold text-stone-200 mb-2">Reset Password</h2>
                     <p className="text-sm text-stone-400 mb-6">
                         Enter your email address and we&apos;ll send you a link to reset your password.
@@ -101,9 +109,16 @@ export default function ForgotPasswordPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-semibold rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-semibold rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                            {isLoading ? 'Sending...' : 'Send Reset Link'}
+                            {isLoading ? (
+                                <>
+                                    <AppleSpinner size="sm" />
+                                    <span>Transmitting Signal...</span>
+                                </>
+                            ) : (
+                                'Send Reset Link'
+                            )}
                         </button>
                     </form>
 

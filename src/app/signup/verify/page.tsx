@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import AppleSpinner from '@/components/ui/AppleSpinner';
 
 function VerifyInstructionsContent() {
     const searchParams = useSearchParams();
@@ -55,21 +56,30 @@ function VerifyInstructionsContent() {
                         Please click the link to verify your account and start your investigation.
                     </p>
 
-                    {/* Developer Mock Info */}
-                    <div className="p-4 bg-amber-950/20 border border-amber-900/30 rounded-lg mb-8 text-left">
-                        <p className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-2">Developer Notice (Mocked Email)</p>
-                        <p className="text-sm text-stone-300 mb-4">
-                            In this production-hardened environment, the email service is currently mocked.
-                            You can simulate clicking the verification link by using the button below.
-                        </p>
-                        <button
-                            onClick={handleVerify}
-                            disabled={isVerifying}
-                            className="w-full py-2 px-4 bg-amber-600 hover:bg-amber-700 text-stone-950 font-bold rounded transition-colors disabled:opacity-50"
-                        >
-                            {isVerifying ? 'Verifying...' : 'Simulate Email Verification'}
-                        </button>
-                    </div>
+                    {/* Developer Mock Info (Rendered only if verification link containing token was opened) */}
+                    {token && (
+                        <div className="p-4 bg-amber-950/20 border border-amber-900/30 rounded-lg mb-8 text-left">
+                            <p className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-2">Developer Notice (Mocked Email)</p>
+                            <p className="text-sm text-stone-300 mb-4">
+                                In this production-hardened environment, the email service is currently mocked.
+                                You can simulate clicking the verification link by using the button below.
+                            </p>
+                            <button
+                                onClick={handleVerify}
+                                disabled={isVerifying}
+                                className="w-full py-2 px-4 bg-amber-600 hover:bg-amber-700 text-stone-950 font-bold rounded transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isVerifying ? (
+                                    <>
+                                        <AppleSpinner size="sm" />
+                                        <span>Verifying Clearance...</span>
+                                    </>
+                                ) : (
+                                    'Simulate Email Verification'
+                                )}
+                            </button>
+                        </div>
+                    )}
 
                     <div className="flex flex-col gap-4">
                         <Link href="/login" className="text-amber-500 hover:text-amber-400 text-sm font-medium transition">
@@ -85,9 +95,7 @@ function VerifyInstructionsContent() {
 export default function VerifyInstructionsPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-stone-950 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
-            </div>
+            <AppleSpinner fullscreen size="xl" label="Verifying transmission..." />
         }>
             <VerifyInstructionsContent />
         </Suspense>

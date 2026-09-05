@@ -1,11 +1,16 @@
 import { defineConfig, devices } from '@playwright/test';
+import * as dotenv from 'dotenv';
+
+// Load environment variables from .env.local then .env
+dotenv.config({ path: '.env.local' });
+dotenv.config();
 
 export default defineConfig({
     testDir: './tests/e2e',
-    fullyParallel: true,
+    fullyParallel: false,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 1, // Retry once even locally for flaky tests
-    workers: process.env.CI ? 1 : undefined,
+    workers: process.env.CI ? 1 : 2,
 
     // Multiple reporters for better visibility
     reporter: process.env.CI
@@ -27,10 +32,7 @@ export default defineConfig({
         // Better for debugging
         actionTimeout: 15000,
         navigationTimeout: 30000,
-
-        extraHTTPHeaders: {
-            'x-test-bypass': 'true',
-        },
+        // Zero x-test-bypass headers - genuine NextAuth session cookies only
     },
 
     projects: [
@@ -38,7 +40,6 @@ export default defineConfig({
             name: 'chromium',
             use: {
                 ...devices['Desktop Chrome'],
-                // Additional settings for stability
                 viewport: { width: 1280, height: 720 },
             },
         },
@@ -50,11 +51,12 @@ export default defineConfig({
     ],
 
     webServer: {
-        command: 'npm run start',
+        command: process.env.CI ? 'npm run start' : 'npm run dev',
         url: 'http://localhost:3000',
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: true,
         timeout: 120000, // 2 minutes to start server
         stdout: 'pipe',
         stderr: 'pipe',
     },
 });
+

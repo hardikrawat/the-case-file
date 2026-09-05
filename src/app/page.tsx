@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Flame, Clock, Award } from "lucide-react";
 import { db } from "@/lib/db";
 import { boards, userReputation } from "@/lib/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, isNull } from "drizzle-orm";
 import { DiscoverHeader } from "@/components/DiscoverHeader";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
@@ -37,7 +37,7 @@ export default async function DiscoverPage() {
   // Only query DB if credentials exist or in test environment
   if (process.env.TURSO_DATABASE_URL || process.env.NODE_ENV === 'test') {
     publicBoards = await db.query.boards.findMany({
-      where: eq(boards.isPublic, true),
+      where: and(eq(boards.isPublic, true), isNull(boards.deletedAt)),
       orderBy: [desc(boards.createdAt)],
       limit: 10,
       with: {
@@ -55,7 +55,7 @@ export default async function DiscoverPage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100 font-sans">
+    <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-500">
       {/* Header */}
       <DiscoverHeader />
 
@@ -65,50 +65,50 @@ export default async function DiscoverPage() {
         <div className="flex-1 space-y-12">
           {/* Hero Section */}
           {publicBoards.length > 0 && (
-            <Link href={`/board/${publicBoards[0].id}`} className="block relative aspect-[2/1] rounded-2xl overflow-hidden border border-stone-800 group cursor-pointer">
-              <div className="absolute inset-0 bg-stone-900 bg-cover bg-center opacity-50 transition-opacity group-hover:opacity-40"></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+            <Link href={`/board/${publicBoards[0].id}`} className="block relative aspect-[2/1] rounded-2xl overflow-hidden border border-panel-border bg-panel group cursor-pointer shadow-xl">
+              <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] transition-opacity group-hover:opacity-40"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
               <div className="absolute bottom-0 left-0 p-8">
-                <div className="flex items-center gap-2 text-amber-500 mb-2">
-                  <Flame className="w-5 h-5 fill-amber-500" />
+                <div className="flex items-center gap-2 text-sidebar-accent mb-2">
+                  <Flame className="w-5 h-5 fill-current" />
                   <span className="text-sm font-bold uppercase tracking-wider">Featured Case</span>
                 </div>
                 <h2 className="text-4xl font-bold font-serif text-white mb-2">{publicBoards[0].title}</h2>
-                <p className="text-stone-300 max-w-xl">Investigate this public case file.</p>
+                <p className="text-white/80 max-w-xl">Investigate this public case file.</p>
               </div>
             </Link>
           )}
 
           {/* Categories */}
-          <div className="flex items-center gap-8 border-b border-stone-800 pb-4">
-            <button className="text-stone-100 font-bold border-b-2 border-amber-500 pb-4 -mb-4.5">Newest Cases</button>
+          <div className="flex items-center gap-8 border-b border-panel-border pb-4">
+            <button className="text-foreground font-bold border-b-2 border-sidebar-accent pb-4 -mb-4.5">Newest Cases</button>
           </div>
 
           {/* Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {publicBoards.slice(1).map((board) => (
-              <Link href={`/board/${board.id}`} key={board.id} className="group block bg-stone-900/50 border border-stone-800 rounded-xl overflow-hidden hover:border-stone-600 transition-all hover:translate-y-[-2px]">
-                <div className="aspect-video bg-stone-800 relative flex items-center justify-center">
-                  <span className="text-stone-700 font-mono text-xs">PREVIEW</span>
-                  <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-xs font-medium text-stone-300 flex items-center gap-1">
+              <Link href={`/board/${board.id}`} key={board.id} className="group block bg-panel/50 border border-panel-border rounded-xl overflow-hidden hover:border-sidebar-accent transition-all hover:translate-y-[-2px] shadow-sm">
+                <div className="aspect-video bg-background relative flex items-center justify-center border-b border-panel-border/50">
+                  <span className="text-panel-foreground/40 font-mono text-xs">PREVIEW</span>
+                  <div className="absolute top-3 right-3 bg-background/80 backdrop-blur-md px-2 py-1 rounded text-xs font-medium text-foreground/80 flex items-center gap-1 border border-panel-border/50">
                     <Clock className="w-3 h-3" /> {board.createdAt ? new Date(board.createdAt).toLocaleDateString() : 'N/A'}
                   </div>
                 </div>
                 <div className="p-5">
-                  <h3 className="text-xl font-bold text-stone-200 group-hover:text-amber-500 transition-colors mb-2">
+                  <h3 className="text-xl font-bold text-foreground group-hover:text-sidebar-accent transition-colors mb-2">
                     {board.title}
                   </h3>
                   <div className="flex items-center justify-between mt-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-stone-700"></div>
-                      <span className="text-sm text-stone-400">Detective</span>
+                      <div className="w-6 h-6 rounded-full bg-sidebar-accent/10 border border-sidebar-accent/20 flex items-center justify-center text-[10px] font-bold text-sidebar-accent">?</div>
+                      <span className="text-sm text-panel-foreground/60">Detective</span>
                     </div>
                   </div>
                 </div>
               </Link>
             ))}
             {publicBoards.length <= 1 && (
-              <div className="col-span-2 text-center text-stone-500 py-10">
+              <div className="col-span-2 text-center text-panel-foreground/50 py-10 bg-panel/30 border border-dashed border-panel-border rounded-xl">
                 No other public cases yet. Be the first to publish one!
               </div>
             )}
@@ -117,32 +117,32 @@ export default async function DiscoverPage() {
 
         {/* Sidebar */}
         <aside className="w-80 hidden lg:block space-y-8">
-          <div className="bg-stone-900/30 border border-stone-800 rounded-xl p-6">
+          <div className="bg-panel/50 border border-panel-border rounded-xl p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-6">
-              <Award className="w-5 h-5 text-amber-500" />
-              <h3 className="text-sm font-bold text-stone-100 uppercase tracking-wider">Top Detectives</h3>
+              <Award className="w-5 h-5 text-sidebar-accent" />
+              <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Top Detectives</h3>
             </div>
             <ul className="space-y-4">
               {topDetectives.length > 0 ? (
                 topDetectives.map((detective, index) => (
-                  <li key={detective.userId} className="flex items-center gap-3 p-2 rounded-lg bg-stone-900/50 hover:bg-stone-800 transition-colors">
-                    <span className={`w-6 h-6 flex items-center justify-center rounded text-xs font-bold ${index === 0 ? 'bg-amber-500 text-stone-900' :
-                      index === 1 ? 'bg-stone-400 text-stone-900' :
-                        index === 2 ? 'bg-amber-900 text-amber-200' :
-                          'bg-stone-800 text-stone-500 border border-stone-700'
+                  <li key={detective.userId} className="flex items-center gap-3 p-2 rounded-lg bg-background/50 hover:bg-background border border-panel-border/50 transition-colors">
+                    <span className={`w-6 h-6 flex items-center justify-center rounded text-xs font-bold ${index === 0 ? 'bg-sidebar-accent text-sidebar-accent-foreground' :
+                      index === 1 ? 'bg-stone-300 text-stone-900' :
+                        index === 2 ? 'bg-amber-800 text-amber-100' :
+                          'bg-panel text-panel-foreground/60 border border-panel-border'
                       }`}>
                       {index + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-stone-200 truncate">
+                      <p className="text-sm font-bold text-foreground truncate">
                         {detective.user?.name || 'Anonymous Detective'}
                       </p>
-                      <p className="text-xs text-stone-500">{detective.points} Rep</p>
+                      <p className="text-xs text-panel-foreground/60">{detective.points} Rep</p>
                     </div>
                   </li>
                 ))
               ) : (
-                <li className="text-stone-500 text-sm italic">No data available yet</li>
+                <li className="text-panel-foreground/40 text-sm italic">No data available yet</li>
               )}
             </ul>
           </div>

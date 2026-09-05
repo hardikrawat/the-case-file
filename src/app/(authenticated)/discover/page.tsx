@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Flame, Clock } from "lucide-react";
 import { db } from "@/lib/db";
 import { boards } from "@/lib/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, isNull } from "drizzle-orm";
 import BoardCard from "@/components/dashboard/BoardCard";
 import BoardPreview, { PreviewEdge, PreviewNode } from "@/components/dashboard/BoardPreview";
 import { Board, BoardContent } from "@/lib/types";
@@ -26,7 +26,7 @@ export default async function DiscoverPage() {
   }
 
   const publicBoards = await db.query.boards.findMany({
-    where: eq(boards.isPublic, true),
+    where: and(eq(boards.isPublic, true), isNull(boards.deletedAt)),
     orderBy: [desc(boards.createdAt)],
     limit: 10,
     with: {
@@ -134,8 +134,8 @@ export default async function DiscoverPage() {
               <BoardCard key={board.id} board={board as unknown as Board} />
             ))}
             {publicBoards.length <= 1 && (
-              <div className="col-span-3 text-center py-20 bg-stone-100/50 dark:bg-stone-900/30 rounded-xl border border-dashed border-stone-300 dark:border-stone-800">
-                <p className="text-stone-500 font-mono text-sm">
+              <div className="col-span-3 text-center py-20 bg-[var(--panel-background)]/30 rounded-xl border border-dashed border-[var(--panel-border)]">
+                <p className="text-[var(--panel-foreground)]/60 font-mono text-sm">
                   {publicBoards.length === 0 ? 'Archives are empty.' : 'No other public cases pending review.'}
                 </p>
               </div>

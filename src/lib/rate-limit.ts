@@ -1,57 +1,52 @@
 import { db } from '@/lib/db';
 import { rateLimits } from '@/lib/schema';
-import { eq, lt } from 'drizzle-orm';
+import { lt, sql } from 'drizzle-orm';
 
 /**
- * Checks if a key (IP or UserId) has exceeded the rate limit.
+ * Checks if a key (IP or UserId) has exceeded the rate limit using an atomic SQLite UPSERT.
+ * Eliminates check-then-act race conditions under concurrent load.
  * @param key The identifier (e.g., "signup:127.0.0.1")
  * @param maxRequests Maximum allowed requests in the window
  * @param windowMs Time window in milliseconds
  * @returns { success: boolean, reset: number }
  */
-export async function checkRateLimit(key: string, maxRequests: number = 5, windowMs: number = 60000) {
+export async function checkRateLimit(
+    key: string,
+    maxRequests: number = 5,
+    windowMs: number = 60000
+): Promise<{ success: boolean; reset: number }> {
     const now = Date.now();
+    const expiresAt = new Date(now + windowMs);
 
     // 1. Probabilistic cleanup (1% of requests) to prevent table bloat
     if (Math.random() < 0.01) {
-        await db.delete(rateLimits).where(lt(rateLimits.expiresAt, new Date(now)));
+        await db.delete(rateLimits).where(lt(rateLimits.expiresAt, new Date(now))).catch(() => {});
     }
 
-    // 2. Get current limit
-    const record = await db.select().from(rateLimits).where(eq(rateLimits.key, key)).limit(1);
+    // 2. Atomic UPSERT with RETURNING
+    const result = await db.insert(rateLimits).values({
+        key,
+        count: 1,
+        expiresAt,
+    }).onConflictDoUpdate({
+        target: rateLimits.key,
+        set: {
+            count: sql`CASE WHEN ${rateLimits.expiresAt} < ${now} THEN 1 ELSE ${rateLimits.count} + 1 END`,
+            expiresAt: sql`CASE WHEN ${rateLimits.expiresAt} < ${now} THEN ${expiresAt.getTime()} ELSE ${rateLimits.expiresAt} END`,
+        }
+    }).returning({
+        count: rateLimits.count,
+        expiresAt: rateLimits.expiresAt,
+    });
 
-    if (record.length === 0) {
-        // Create new record
-        const expiresAt = new Date(now + windowMs);
-        await db.insert(rateLimits).values({
-            key,
-            count: 1,
-            expiresAt,
-        });
-        return { success: true, reset: expiresAt.getTime() };
-    }
+    const record = result[0];
+    const count = record?.count ?? 1;
+    const reset = record?.expiresAt instanceof Date
+        ? record.expiresAt.getTime()
+        : Number(record?.expiresAt ?? (now + windowMs));
 
-    const expiresAt = record[0].expiresAt;
-    const count = record[0].count || 0;
-
-    if (now > expiresAt.getTime()) {
-        // Window expired, reset count
-        const newExpiresAt = new Date(now + windowMs);
-        await db.update(rateLimits)
-            .set({ count: 1, expiresAt: newExpiresAt })
-            .where(eq(rateLimits.key, key));
-        return { success: true, reset: newExpiresAt.getTime() };
-    }
-
-    if (count >= maxRequests) {
-        // Rate limit exceeded
-        return { success: false, reset: expiresAt.getTime() };
-    }
-
-    // Increment count
-    await db.update(rateLimits)
-        .set({ count: count + 1 })
-        .where(eq(rateLimits.key, key));
-
-    return { success: true, reset: expiresAt.getTime() };
+    return {
+        success: count <= maxRequests,
+        reset,
+    };
 }

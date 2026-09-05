@@ -24,11 +24,15 @@ export async function GET() {
             return new NextResponse("User not found", { status: 404 });
         }
 
+        // Exclude passwordHash and any raw password fields
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { passwordHash, ...safeUser } = user as typeof user & { password_hash?: string };
+
         // Return user data along with reputation stats
         const rep = user.reputation as unknown as { points: number; boardsCreated: number; contributionsAccepted: number } | null;
 
         return NextResponse.json({
-            ...user,
+            ...safeUser,
             reputationPoints: rep?.points || 0,
             boardsCreated: rep?.boardsCreated || 0,
             contributionsAccepted: rep?.contributionsAccepted || 0,

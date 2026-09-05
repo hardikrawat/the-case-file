@@ -31,11 +31,11 @@ export function UserBadge({
 
 
     return (
-        <div className={twMerge("flex items-center gap-3", className)}>
-            <div className="relative group">
+        <div className={twMerge("flex items-center", size === 'sm' ? "gap-2" : "gap-3", className)}>
+            <div className="relative group shrink-0">
                 {/* ID Card / Badge Container for Avatar */}
                 <div className={twMerge(
-                    "relative overflow-hidden rounded-md border-2 border-[var(--panel-border)] bg-[var(--panel-background)] shadow-lg",
+                    "relative overflow-hidden rounded-md border border-[var(--panel-border)] bg-[var(--panel-background)] shadow-sm",
                     sizeClasses[size].split(' ')[0],
                     sizeClasses[size].split(' ')[1]
                 )}>
@@ -60,18 +60,27 @@ export function UserBadge({
                 </div>
 
                 {/* Status Indicator */}
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-[var(--background)] shadow-sm" />
+                <div className={twMerge(
+                    "absolute -bottom-0.5 -right-0.5 bg-green-500 rounded-full border-2 border-[var(--background)] shadow-sm",
+                    size === 'sm' ? "w-2.5 h-2.5" : "w-3 h-3"
+                )} />
             </div>
 
             {(showName || showRank) && (
-                <div className="flex flex-col">
+                <div className="flex flex-col leading-tight min-w-0">
                     {showName && (
-                        <span className="font-mono font-bold text-[var(--foreground)] tracking-wider">
+                        <span className={twMerge(
+                            "font-mono font-bold text-[var(--foreground)] tracking-wider truncate",
+                            size === 'sm' ? "text-xs max-w-[130px]" : "text-sm"
+                        )}>
                             {user.name || "UNKNOWN AGENT"}
                         </span>
                     )}
                     {showRank && (
-                        <span className="text-[10px] font-bold text-[var(--sidebar-accent)] uppercase tracking-widest border border-[var(--sidebar-accent)]/20 px-1.5 py-0.5 rounded bg-[var(--sidebar-accent)]/10 inline-block mt-0.5">
+                        <span className={twMerge(
+                            "font-bold text-[var(--sidebar-accent)] uppercase tracking-widest border border-[var(--sidebar-accent)]/20 rounded bg-[var(--sidebar-accent)]/10 inline-block shrink-0",
+                            size === 'sm' ? "text-[9px] px-1 py-0 mt-0.5" : "text-[10px] px-1.5 py-0.5 mt-0.5"
+                        )}>
                             {rank}
                         </span>
                     )}

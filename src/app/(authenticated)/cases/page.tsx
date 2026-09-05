@@ -87,8 +87,8 @@ export default function DashboardPage() {
 
             <header className="flex justify-between items-center mb-8">
                 <div>
-                    <h2 className="text-3xl font-bold font-serif text-stone-100">My Cases</h2>
-                    <p className="text-stone-400 mt-1">
+                    <h2 className="text-3xl font-bold font-serif text-[var(--foreground)]">My Cases</h2>
+                    <p className="text-[var(--panel-foreground)]/60 mt-1">
                         {filteredAndSortedBoards.length} {filteredAndSortedBoards.length === 1 ? 'case' : 'cases'}
                     </p>
                 </div>
@@ -101,7 +101,7 @@ export default function DashboardPage() {
                     />
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-lg shadow-amber-900/20"
+                        className="flex items-center gap-2 bg-[var(--sidebar-accent)] hover:bg-[var(--sidebar-accent)]/90 text-[var(--sidebar-accent-foreground)] px-4 py-2 rounded-lg font-medium transition-colors shadow-lg shadow-[var(--sidebar-accent)]/20"
                     >
                         <Plus className="w-5 h-5" />
                         New Case
@@ -112,8 +112,8 @@ export default function DashboardPage() {
             {loading ? (
                 <DashboardLoading status="Retrieving Case Files..." />
             ) : filteredAndSortedBoards.length === 0 ? (
-                <div className="text-center py-20 bg-stone-900/30 rounded-xl border border-stone-800 border-dashed">
-                    <p className="text-stone-500 mb-4">
+                <div className="text-center py-20 bg-[var(--panel-background)]/30 rounded-xl border border-[var(--panel-border)] border-dashed">
+                    <p className="text-[var(--panel-foreground)]/60 mb-4">
                         {boards.length === 0 ? 'No cases found.' : 'No cases match your filters.'}
                     </p>
                     <button
@@ -125,7 +125,7 @@ export default function DashboardPage() {
                                 setFilterBy('all');
                             }
                         }}
-                        className="text-amber-500 hover:text-amber-400 font-bold"
+                        className="text-[var(--sidebar-accent)] hover:underline font-bold"
                     >
                         {boards.length === 0 ? 'Create your first case' : 'Reset filters'}
                     </button>
