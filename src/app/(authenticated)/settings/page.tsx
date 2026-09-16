@@ -1,7 +1,8 @@
 'use client';
 
 import useStore from '@/store/useStore';
-import { Palette, Check } from 'lucide-react';
+import { Palette, Check, Brain } from 'lucide-react';
+import DetectiveConfigTab from '@/components/detective/DetectiveConfigTab';
 
 export default function SettingsPage() {
     const theme = useStore((state) => state.theme);
@@ -63,6 +64,18 @@ export default function SettingsPage() {
                         </button>
                     ))}
                 </div>
+            </section>
+
+            {/* AI Detective Configuration */}
+            <section className="bg-panel/50 border border-panel-border rounded-xl p-8 backdrop-blur-sm">
+                <div className="mb-6 flex items-center gap-3">
+                    <Brain className="w-6 h-6 text-sidebar-accent" />
+                    <div>
+                        <h2 className="text-xl font-bold text-panel-foreground">AI Detective</h2>
+                        <p className="text-sm text-panel-foreground/60">Configure your AI investigation assistant. Connect a cloud provider or use a local model.</p>
+                    </div>
+                </div>
+                <DetectiveConfigTab />
             </section>
         </div>
     );

@@ -3,8 +3,9 @@
 import React from 'react';
 import { useReactFlow } from 'reactflow';
 import useStore from '@/store/useStore';
+import useDetectiveStore from '@/store/detectiveStore';
 
-import { Download, Trash2, Upload } from 'lucide-react';
+import { Download, Trash2, Upload, Brain } from 'lucide-react';
 
 const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
     const addNode = useStore((state) => state.addNode);
@@ -19,6 +20,8 @@ const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
     const setTheme = useStore((state) => state.setTheme);
     const theme = useStore((state) => state.theme);
     const { project } = useReactFlow();
+    const toggleDetective = useDetectiveStore((state) => state.togglePanel);
+    const isDetectiveOpen = useDetectiveStore((state) => state.isPanelOpen);
 
     if (isReadOnly) return null;
 
@@ -168,6 +171,20 @@ const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
             <button onClick={addText} className="px-4 py-2 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors text-gray-700">Text</button>
             <button onClick={addImage} className="px-4 py-2 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors text-gray-700">Image</button>
             <button onClick={addArticle} className="px-4 py-2 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors text-gray-700">Article</button>
+
+            <div className="w-px h-6 bg-gray-300 mx-2"></div>
+
+            <button
+                onClick={toggleDetective}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${isDetectiveOpen
+                    ? 'bg-amber-100 text-amber-700 ring-2 ring-amber-400'
+                    : 'hover:bg-gray-100 text-gray-600'
+                    }`}
+                title="AI Detective"
+            >
+                <Brain size={18} />
+                <span className="hidden sm:inline">Detective</span>
+            </button>
 
             <div className="w-px h-6 bg-gray-300 mx-2"></div>
 

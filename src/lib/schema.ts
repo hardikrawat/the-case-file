@@ -168,7 +168,9 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     comments: many(comments),
     boardVersions: many(boardVersions),
     collaborators: many(boardCollaborators),
-    reputation: one(userReputation)
+    reputation: one(userReputation),
+    aiConfigurations: many(aiConfigurations),
+    detectiveSessions: many(detectiveSessions)
 }));
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -193,7 +195,8 @@ export const boardsRelations = relations(boards, ({ one, many }) => ({
     contributions: many(contributions),
     comments: many(comments),
     versions: many(boardVersions),
-    collaborators: many(boardCollaborators)
+    collaborators: many(boardCollaborators),
+    detectiveSessions: many(detectiveSessions)
 }));
 
 export const contributionsRelations = relations(contributions, ({ one }) => ({
@@ -261,3 +264,51 @@ export const rateLimits = sqliteTable('rate_limits', {
     count: integer('count').default(0),
     expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
 });
+
+// AI Detective Configuration
+export const aiConfigurations = sqliteTable('ai_configurations', {
+    id: text('id').primaryKey().$defaultFn(() => createId()),
+    userId: text('user_id')
+        .notNull()
+        .references(() => users.id, { onDelete: 'cascade' }),
+    provider: text('provider').notNull(), // 'openai' | 'anthropic' | 'google' | 'ollama'
+    modelId: text('model_id').notNull(),
+    apiKey: text('api_key'), // encrypted, null for ollama
+    baseUrl: text('base_url'), // custom endpoint for ollama
+    isActive: integer('is_active', { mode: 'boolean' }).default(true),
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
+});
+
+// Detective Conversation Sessions
+export const detectiveSessions = sqliteTable('detective_sessions', {
+    id: text('id').primaryKey().$defaultFn(() => createId()),
+    boardId: text('board_id')
+        .notNull()
+        .references(() => boards.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+        .notNull()
+        .references(() => users.id, { onDelete: 'cascade' }),
+    messages: text('messages', { mode: 'json' }).$type<Record<string, unknown>[]>().default([]),
+    boardSnapshot: text('board_snapshot', { mode: 'json' }).$type<Record<string, unknown>>(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
+});
+
+export const aiConfigurationsRelations = relations(aiConfigurations, ({ one }) => ({
+    user: one(users, {
+        fields: [aiConfigurations.userId],
+        references: [users.id]
+    })
+}));
+
+export const detectiveSessionsRelations = relations(detectiveSessions, ({ one }) => ({
+    user: one(users, {
+        fields: [detectiveSessions.userId],
+        references: [users.id]
+    }),
+    board: one(boards, {
+        fields: [detectiveSessions.boardId],
+        references: [boards.id]
+    })
+}));

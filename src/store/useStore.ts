@@ -34,6 +34,10 @@ type RFState = {
     setBoardMetadata: (title: string, isPublic: boolean, parentId: string | null) => void;
     deleteNode: (id: string) => void;
     updateNode: (id: string, data: unknown) => void;
+    connectMode: boolean;
+    setConnectMode: (mode: boolean) => void;
+    sourceNodeId: string | null;
+    setSourceNodeId: (id: string | null) => void;
 };
 
 const safeStorage = {
@@ -130,6 +134,10 @@ const useStore = create<RFState>()(
                 }),
             parentId: null,
             setBoardMetadata: (title, isPublic, parentId) => set({ boardTitle: title, isPublic, parentId }),
+            connectMode: false,
+            setConnectMode: (connectMode) => set({ connectMode }),
+            sourceNodeId: null,
+            setSourceNodeId: (sourceNodeId) => set({ sourceNodeId }),
         }),
         {
             name: 'case-file-storage',

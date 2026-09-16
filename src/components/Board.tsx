@@ -28,8 +28,7 @@ import StringEdge from '@/components/edges/StringEdge';
 import BoardSettingsModal from '@/components/dashboard/BoardSettingsModal';
 import ContributionModal from '@/components/dashboard/ContributionModal';
 import ProgressBar from '@/components/ui/ProgressBar';
-
-
+import DetectivePanel from '@/components/detective/DetectivePanel';
 
 const nodeTypes = {
     sticky: StickyNoteNode,
@@ -430,6 +429,7 @@ const Board = () => {
                 <MiniMap />
                 <Toolbar isReadOnly={isReadOnly} />
             </ReactFlow>
+            <DetectivePanel boardId={boardId} />
         </div >
     );
 };
