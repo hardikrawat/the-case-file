@@ -18,8 +18,8 @@ export const getAvailableModels = (provider: AIProviderType): ModelInfo[] => {
       ];
     case 'google':
       return [
-        { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'google', description: 'Most capable Gemini model' },
-        { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'google', description: 'Fast Gemini model' }
+        { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'google', description: 'Fast, reliable, and intelligent model' },
+        { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash', provider: 'google', description: 'Latest high-performance Gemini model' }
       ];
     case 'ollama':
       return [

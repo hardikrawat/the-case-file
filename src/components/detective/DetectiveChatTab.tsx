@@ -62,7 +62,9 @@ export default function DetectiveChatTab({ boardId }: DetectiveChatTabProps) {
             I am ready to analyze the evidence. How can I assist you in this investigation?
           </div>
         ) : (
-          messages.map((m, idx) => (
+          messages
+            .filter((m) => m.content?.trim() || (m.toolInvocations && m.toolInvocations.length > 0))
+            .map((m, idx) => (
             <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div
                 className={`max-w-[85%] rounded-lg p-3 text-sm ${

@@ -15,8 +15,8 @@ const PROVIDERS = [
 
 const MODELS_BY_PROVIDER: Record<string, string[]> = {
   openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
-  anthropic: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
-  google: ['gemini-2.0-flash', 'gemini-1.5-pro'],
+  anthropic: ['claude-3-7-sonnet-20250219', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
+  google: ['gemini-2.5-flash', 'gemini-3.6-flash'],
   ollama: ['llama3.2', 'mistral', 'phi3', 'codellama'],
 };
 
@@ -124,17 +124,25 @@ export default function DetectiveConfigTab() {
           <div className="space-y-2">
             <label className="text-sm font-medium text-[var(--panel-foreground)]">Model</label>
             <select
-              value={modelId}
-              onChange={(e) => setModelId(e.target.value)}
+              value={getModelsForProvider(provider).includes(modelId) ? modelId : 'custom'}
+              onChange={(e) => {
+                if (e.target.value === 'custom') {
+                  setModelId('custom');
+                } else {
+                  setModelId(e.target.value);
+                }
+              }}
               className="w-full p-2 bg-transparent border border-[var(--panel-border)] rounded-md text-sm text-[var(--panel-foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--sidebar-accent)]"
             >
               {getModelsForProvider(provider).map(m => <option key={m} value={m}>{m}</option>)}
-              {provider.toLowerCase() === 'ollama' && <option value="custom">Custom...</option>}
+              <option value="custom">Custom model name...</option>
             </select>
-            {modelId === 'custom' && (
+            {(!getModelsForProvider(provider).includes(modelId) || modelId === 'custom') && (
               <input
                 type="text"
-                placeholder="Custom model name"
+                value={modelId === 'custom' ? '' : modelId}
+                onChange={(e) => setModelId(e.target.value)}
+                placeholder="Enter custom model ID (e.g. gemini-2.5-flash)"
                 className="w-full p-2 mt-2 bg-transparent border border-[var(--panel-border)] rounded-md text-sm text-[var(--panel-foreground)]"
               />
             )}
