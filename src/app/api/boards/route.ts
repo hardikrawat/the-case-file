@@ -82,9 +82,11 @@ export async function GET() {
           .where(and(eq(boards.userId, session.user.id), isNull(boards.deletedAt)))
           .orderBy(desc(boards.updatedAt));
 
-        // Auto-seed starter example case for first-time detectives
-        if (userBoards.length === 0) {
-            const { createExampleBoard } = await import('@/lib/example-case');
+        // Auto-seed starter example case if user doesn't have it yet
+        const { EXAMPLE_CASE_TITLE, createExampleBoard } = await import('@/lib/example-case');
+        const hasExample = userBoards.some((b) => b.title === EXAMPLE_CASE_TITLE);
+
+        if (!hasExample) {
             await createExampleBoard(session.user.id);
 
             userBoards = await db.select({
