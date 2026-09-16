@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     const validatedData = sessionSchema.parse(body);
 
     if (validatedData.sessionId) {
-      // Update existing session
+      // Try updating existing session
       const [updatedSession] = await db
         .update(detectiveSessions)
         .set({
@@ -69,31 +69,71 @@ export async function POST(req: Request) {
         )
         .returning();
 
-      if (!updatedSession) {
-        return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+      if (updatedSession) {
+        return NextResponse.json({ session: updatedSession });
       }
-
-      return NextResponse.json({ session: updatedSession });
-    } else {
-      // Create new session
-      const [newSession] = await db
-        .insert(detectiveSessions)
-        .values({
-          id: createId(),
-          boardId: validatedData.boardId,
-          userId: session.user.id,
-          messages: validatedData.messages,
-          boardSnapshot: validatedData.boardSnapshot,
-        })
-        .returning();
-
-      return NextResponse.json({ session: newSession });
     }
+
+    // Create new session (either brand new or fallback if previous sessionId was deleted)
+    const [newSession] = await db
+      .insert(detectiveSessions)
+      .values({
+        id: createId(),
+        boardId: validatedData.boardId,
+        userId: session.user.id,
+        messages: validatedData.messages,
+        boardSnapshot: validatedData.boardSnapshot,
+      })
+      .returning();
+
+    return NextResponse.json({ session: newSession });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues }, { status: 400 });
     }
     console.error('Failed to save detective session:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const boardId = searchParams.get('boardId');
+    const sessionId = searchParams.get('sessionId');
+
+    if (!boardId && !sessionId) {
+      return NextResponse.json({ error: 'boardId or sessionId is required' }, { status: 400 });
+    }
+
+    if (sessionId) {
+      await db
+        .delete(detectiveSessions)
+        .where(
+          and(
+            eq(detectiveSessions.id, sessionId),
+            eq(detectiveSessions.userId, session.user.id)
+          )
+        );
+    } else if (boardId) {
+      await db
+        .delete(detectiveSessions)
+        .where(
+          and(
+            eq(detectiveSessions.boardId, boardId),
+            eq(detectiveSessions.userId, session.user.id)
+          )
+        );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Failed to delete detective session:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

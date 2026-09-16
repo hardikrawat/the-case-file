@@ -12,6 +12,7 @@ import {
   Copy,
   Check,
   AlertCircle,
+  Trash2,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -237,7 +238,9 @@ export default function DetectiveChatTab({ boardId }: DetectiveChatTabProps) {
     handleInputChange,
     handleSubmit,
     isStreaming,
+    isLoadingHistory,
     sendMessage,
+    clearChat,
   } = useDetective(boardId);
   const { setPanelMode } = useDetectiveStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -272,7 +275,7 @@ export default function DetectiveChatTab({ boardId }: DetectiveChatTabProps) {
 
   return (
     <div className="flex flex-col h-full bg-[var(--panel-background)]">
-      <div className="flex gap-2 p-3 border-b border-[var(--panel-border)] overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-2 p-3 border-b border-[var(--panel-border)] overflow-x-auto no-scrollbar">
         <button
           onClick={() => handleQuickAction('Scan the board and summarize the current state.')}
           className="whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200 transition-colors"
@@ -291,10 +294,25 @@ export default function DetectiveChatTab({ boardId }: DetectiveChatTabProps) {
         >
           <HelpCircle className="w-3.5 h-3.5" /> What am I Missing?
         </button>
+        {messages.length > 0 && (
+          <button
+            onClick={clearChat}
+            disabled={isStreaming}
+            className="whitespace-nowrap flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 disabled:opacity-40 transition-colors ml-auto"
+            title="Clear investigation history"
+          >
+            <Trash2 className="w-3.5 h-3.5" /> Clear
+          </button>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 ? (
+        {isLoadingHistory ? (
+          <div className="flex flex-col items-center justify-center py-20 space-y-3 text-gray-500">
+            <Loader2 className="w-6 h-6 animate-spin text-[var(--sidebar-accent)]" />
+            <span className="text-xs">Loading case dossier & chat history...</span>
+          </div>
+        ) : messages.length === 0 ? (
           <div className="text-center text-sm text-gray-500 mt-10">
             I am ready to analyze the evidence. How can I assist you in this investigation?
           </div>

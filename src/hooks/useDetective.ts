@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import useStore from '@/store/useStore';
 import useDetectiveStore from '@/store/detectiveStore';
 import type { DetectiveMessage } from '@/types/detective';
@@ -12,14 +12,57 @@ export function useDetective(boardId: string) {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<DetectiveMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
 
-  // Sync with store messages if available
   useEffect(() => {
-    if (store.messages.length > 0 && messages.length === 0) {
-      setMessages(store.messages);
-    }
+    sessionIdRef.current = sessionId;
+  }, [sessionId]);
+
+  // Load session history when boardId changes
+  useEffect(() => {
+    if (!boardId) return;
+
+    let isMounted = true;
+    const fetchSessionHistory = async () => {
+      setIsLoadingHistory(true);
+      try {
+        const res = await fetch(`/api/detective/sessions?boardId=${boardId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) {
+            if (data.sessions && data.sessions.length > 0) {
+              const latest = data.sessions[0];
+              const loadedMsgs = (latest.messages || []) as DetectiveMessage[];
+              setSessionId(latest.id);
+              store.setSessionId(latest.id);
+              setMessages(loadedMsgs);
+              store.setMessages(loadedMsgs);
+            } else {
+              setSessionId(null);
+              store.setSessionId(null);
+              setMessages([]);
+              store.setMessages([]);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load detective session history:', err);
+      } finally {
+        if (isMounted) {
+          setIsLoadingHistory(false);
+        }
+      }
+    };
+
+    fetchSessionHistory();
+
+    return () => {
+      isMounted = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store.messages]);
+  }, [boardId]);
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -83,10 +126,12 @@ export function useDetective(boardId: string) {
           boardTitle,
           nodes,
           edges,
-          messages: newMessages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
+          messages: newMessages
+            .filter((m) => m.content && m.content.trim())
+            .map((m) => ({
+              role: m.role,
+              content: m.content,
+            })),
         }),
       });
 
@@ -121,7 +166,35 @@ export function useDetective(boardId: string) {
           ...assistantMsg,
           content: accumulatedContent,
         };
+        const updatedMessages = [...newMessages, finalAssistantMsg];
         store.addMessage(finalAssistantMsg);
+
+        // Persist session to Turso database
+        try {
+          const saveRes = await fetch('/api/detective/sessions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              boardId,
+              sessionId: sessionIdRef.current || undefined,
+              messages: updatedMessages,
+              boardSnapshot: {
+                boardTitle,
+                nodeCount: nodes.length,
+                edgeCount: edges.length,
+              },
+            }),
+          });
+          if (saveRes.ok) {
+            const saveData = await saveRes.json();
+            if (saveData.session?.id) {
+              setSessionId(saveData.session.id);
+              store.setSessionId(saveData.session.id);
+            }
+          }
+        } catch (saveErr) {
+          console.error('Failed to auto-save detective session:', saveErr);
+        }
       }
     } catch (error) {
       console.error('Streaming chat error:', error);
@@ -136,8 +209,34 @@ export function useDetective(boardId: string) {
     } finally {
       setIsStreaming(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages, isStreaming, boardId, boardTitle, nodes, edges]);
+  }, [messages, isStreaming, boardId, boardTitle, nodes, edges, store]);
+
+  const clearChat = useCallback(async () => {
+    if (isStreaming) return;
+    setMessages([]);
+    store.clearConversation();
+    const currentId = sessionIdRef.current;
+    setSessionId(null);
+    store.setSessionId(null);
+
+    if (currentId) {
+      try {
+        await fetch(`/api/detective/sessions?sessionId=${currentId}`, {
+          method: 'DELETE',
+        });
+      } catch (err) {
+        console.error('Failed to delete detective session:', err);
+      }
+    } else if (boardId) {
+      try {
+        await fetch(`/api/detective/sessions?boardId=${boardId}`, {
+          method: 'DELETE',
+        });
+      } catch (err) {
+        console.error('Failed to delete detective session for board:', err);
+      }
+    }
+  }, [isStreaming, store, boardId]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setInput(e.target.value);
@@ -176,11 +275,13 @@ export function useDetective(boardId: string) {
     handleInputChange,
     handleSubmit,
     isStreaming,
+    isLoadingHistory,
     analysis: store.lastAnalysis,
     isAnalyzing: store.isAnalyzing,
     runAnalysis,
     sendMessage,
     setMessages,
+    clearChat,
   };
 }
 
