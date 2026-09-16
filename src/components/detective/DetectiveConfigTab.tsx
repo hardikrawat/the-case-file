@@ -4,19 +4,33 @@ import React, { useState, useEffect } from 'react';
 import { Save, Eye, EyeOff, Check, X, Loader2 } from 'lucide-react';
 import useDetectiveStore from '@/store/detectiveStore';
 
-const PROVIDERS = ['OpenAI', 'Anthropic', 'Google', 'Ollama'];
+import type { AIProviderType } from '@/types/detective';
+
+const PROVIDERS = [
+  { id: 'openai', name: 'OpenAI' },
+  { id: 'anthropic', name: 'Anthropic' },
+  { id: 'google', name: 'Google Gemini' },
+  { id: 'ollama', name: 'Ollama (Local)' },
+];
 
 const MODELS_BY_PROVIDER: Record<string, string[]> = {
-  OpenAI: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
-  Anthropic: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
-  Google: ['gemini-2.0-flash', 'gemini-1.5-pro'],
-  Ollama: ['llama3.2', 'mistral', 'phi3', 'codellama']
+  openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
+  anthropic: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
+  google: ['gemini-2.0-flash', 'gemini-1.5-pro'],
+  ollama: ['llama3.2', 'mistral', 'phi3', 'codellama'],
+};
+
+const getModelsForProvider = (p?: string): string[] => {
+  if (!p) return MODELS_BY_PROVIDER.openai;
+  const key = p.toLowerCase();
+  return MODELS_BY_PROVIDER[key] || MODELS_BY_PROVIDER.openai;
 };
 
 export default function DetectiveConfigTab() {
   const { aiConfig, isConfigLoading } = useDetectiveStore();
-  const [provider, setProvider] = useState(aiConfig?.provider || 'OpenAI');
-  const [modelId, setModelId] = useState(aiConfig?.modelId || MODELS_BY_PROVIDER['OpenAI'][0]);
+  const initialProvider = (aiConfig?.provider || 'openai').toLowerCase();
+  const [provider, setProvider] = useState<string>(initialProvider);
+  const [modelId, setModelId] = useState<string>(aiConfig?.modelId || getModelsForProvider(initialProvider)[0]);
   const [apiKey, setApiKey] = useState(aiConfig?.apiKey || '');
   const [baseUrl, setBaseUrl] = useState(aiConfig?.baseUrl || 'http://localhost:11434');
   
@@ -25,10 +39,22 @@ export default function DetectiveConfigTab() {
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<'success' | 'error' | null>(null);
 
+  // Sync state if aiConfig loads or updates in store
+  useEffect(() => {
+    if (aiConfig) {
+      const p = (aiConfig.provider || 'openai').toLowerCase();
+      setProvider(p);
+      setModelId(aiConfig.modelId || getModelsForProvider(p)[0]);
+      if (aiConfig.apiKey !== undefined) setApiKey(aiConfig.apiKey);
+      if (aiConfig.baseUrl !== undefined) setBaseUrl(aiConfig.baseUrl);
+    }
+  }, [aiConfig]);
+
   // Update model list when provider changes
   useEffect(() => {
-    if (!MODELS_BY_PROVIDER[provider].includes(modelId)) {
-      setModelId(MODELS_BY_PROVIDER[provider][0]);
+    const models = getModelsForProvider(provider);
+    if (!models.includes(modelId) && modelId !== 'custom') {
+      setModelId(models[0] || '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [provider]);
@@ -37,7 +63,7 @@ export default function DetectiveConfigTab() {
     setIsSaving(true);
     try {
       const config = {
-        provider: provider.toLowerCase() as import('@/types/detective').AIProviderType,
+        provider: provider.toLowerCase() as AIProviderType,
         modelId,
         apiKey,
         baseUrl,
@@ -87,11 +113,11 @@ export default function DetectiveConfigTab() {
           <div className="space-y-2">
             <label className="text-sm font-medium text-[var(--panel-foreground)]">Provider</label>
             <select
-              value={provider}
+              value={provider.toLowerCase()}
               onChange={(e) => setProvider(e.target.value)}
               className="w-full p-2 bg-transparent border border-[var(--panel-border)] rounded-md text-sm text-[var(--panel-foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--sidebar-accent)]"
             >
-              {PROVIDERS.map(p => <option key={p} value={p}>{p}</option>)}
+              {PROVIDERS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
 
@@ -102,8 +128,8 @@ export default function DetectiveConfigTab() {
               onChange={(e) => setModelId(e.target.value)}
               className="w-full p-2 bg-transparent border border-[var(--panel-border)] rounded-md text-sm text-[var(--panel-foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--sidebar-accent)]"
             >
-              {MODELS_BY_PROVIDER[provider].map(m => <option key={m} value={m}>{m}</option>)}
-              {provider === 'Ollama' && <option value="custom">Custom...</option>}
+              {getModelsForProvider(provider).map(m => <option key={m} value={m}>{m}</option>)}
+              {provider.toLowerCase() === 'ollama' && <option value="custom">Custom...</option>}
             </select>
             {modelId === 'custom' && (
               <input
@@ -114,7 +140,7 @@ export default function DetectiveConfigTab() {
             )}
           </div>
 
-          {provider !== 'Ollama' && (
+          {provider.toLowerCase() !== 'ollama' && (
             <div className="space-y-2">
               <label className="text-sm font-medium text-[var(--panel-foreground)]">API Key</label>
               <div className="relative">
@@ -122,7 +148,7 @@ export default function DetectiveConfigTab() {
                   type={showKey ? 'text' : 'password'}
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={`Enter ${provider} API Key`}
+                  placeholder="Enter API Key"
                   className="w-full p-2 pr-10 bg-transparent border border-[var(--panel-border)] rounded-md text-sm text-[var(--panel-foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--sidebar-accent)]"
                 />
                 <button
@@ -135,7 +161,7 @@ export default function DetectiveConfigTab() {
             </div>
           )}
 
-          {provider === 'Ollama' && (
+          {provider.toLowerCase() === 'ollama' && (
             <div className="space-y-2">
               <label className="text-sm font-medium text-[var(--panel-foreground)]">Base URL</label>
               <input

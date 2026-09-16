@@ -69,6 +69,11 @@ const nodeTypes = {
     link: LinkNode,
 };
 
+const edgeTypes = {
+    default: StringEdge,
+    string: StringEdge,
+};
+
 // Bug 198: Memoize edge options outside component
 const defaultEdgeOpts = { type: 'string', animated: false };
 
@@ -234,14 +239,6 @@ const Board = () => {
         if (canEditBoard || isOwnerBoard) return false; // Authorized editor or owner
         return session.user.id !== boardOwnerId;
     }, [boardOwnerId, session?.user?.id, canEditBoard, isOwnerBoard]);
-
-    const edgeTypes = useMemo(
-        () => ({
-            default: StringEdge,
-            string: StringEdge,
-        }),
-        []
-    );
 
     // Bug 27: Create snapshot that strips ephemeral props for comparison
     const createCleanSnapshot = useCallback((n: Node[], e: typeof edges) => {
