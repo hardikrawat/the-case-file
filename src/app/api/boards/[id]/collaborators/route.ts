@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db } from '@/lib/db';
-import { boardCollaborators, users, boards, notifications } from '@/lib/schema';
+import { boardCollaborators, users, notifications } from '@/lib/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { z } from 'zod';

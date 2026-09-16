@@ -13,9 +13,7 @@ import {
     Shield, 
     Award, 
     Paperclip, 
-    Reply,
-    Clock,
-    User
+    Reply
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import AppleSpinner from '@/components/ui/AppleSpinner';

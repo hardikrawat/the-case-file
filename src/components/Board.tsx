@@ -563,7 +563,7 @@ const Board = () => {
                 console.warn('Automated checkpoint snapshot skipped:', err);
             });
         }
-    }, [nodes, edges, boardId, isReadOnly, isOffline, stripEphemeralProps]);
+    }, [nodes, edges, boardId, isReadOnly, isOffline]);
 
     // Synchronize title draft with boardTitle
     useEffect(() => {
