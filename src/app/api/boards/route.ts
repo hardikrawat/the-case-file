@@ -63,7 +63,7 @@ export async function GET() {
     }
 
     try {
-        const userBoards = await db.select({
+        let userBoards = await db.select({
             id: boards.id,
             title: boards.title,
             isPublic: boards.isPublic,
@@ -81,6 +81,32 @@ export async function GET() {
           .leftJoin(users, eq(boards.userId, users.id))
           .where(and(eq(boards.userId, session.user.id), isNull(boards.deletedAt)))
           .orderBy(desc(boards.updatedAt));
+
+        // Auto-seed starter example case for first-time detectives
+        if (userBoards.length === 0) {
+            const { createExampleBoard } = await import('@/lib/example-case');
+            await createExampleBoard(session.user.id);
+
+            userBoards = await db.select({
+                id: boards.id,
+                title: boards.title,
+                isPublic: boards.isPublic,
+                thumbnail: boards.thumbnail,
+                stars: boards.stars,
+                views: boards.views,
+                createdAt: boards.createdAt,
+                updatedAt: boards.updatedAt,
+                parentId: boards.parentId,
+                author: {
+                    name: users.name,
+                    image: users.image,
+                }
+            }).from(boards)
+              .leftJoin(users, eq(boards.userId, users.id))
+              .where(and(eq(boards.userId, session.user.id), isNull(boards.deletedAt)))
+              .orderBy(desc(boards.updatedAt));
+        }
+
         return NextResponse.json(userBoards);
     } catch (error) {
         console.error('Error fetching boards:', error);

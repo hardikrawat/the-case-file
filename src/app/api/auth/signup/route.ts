@@ -65,7 +65,11 @@ export async function POST(req: NextRequest) {
             createdAt: new Date(),
         });
 
-        // 6. Create verification token (persisted to DB; dispatched out-of-band via email / logged to console)
+        // 6. Create example starter case for new detective
+        const { createExampleBoard } = await import('@/lib/example-case');
+        await createExampleBoard(userId);
+
+        // 7. Create verification token (persisted to DB; dispatched out-of-band via email / logged to console)
         const verificationToken = await createVerificationToken(userId);
         console.log(`[AUTH] Verification link for ${email}: http://localhost:3000/signup/verify?token=${verificationToken}`);
 
