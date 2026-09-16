@@ -55,6 +55,7 @@ import { CommentsPanel } from '@/components/CommentsPanel';
 import { CollaboratorsPanel } from '@/components/CollaboratorsPanel';
 import { VersionHistory } from '@/components/VersionHistory';
 import { ExportModal } from '@/components/ExportModal';
+import DetectivePanel from '@/components/detective/DetectivePanel';
 
 // Bug 4: Context for isReadOnly to avoid perf-killing .map() in render
 import { IsReadOnlyContext, useIsReadOnly } from '@/context/ReadOnlyContext';
@@ -1498,6 +1499,9 @@ const Board = () => {
                         </div>
                     </div>
                 )}
+
+                {/* AI Detective Panel */}
+                <DetectivePanel boardId={boardId} />
             </div>
         </IsReadOnlyContext.Provider>
     );

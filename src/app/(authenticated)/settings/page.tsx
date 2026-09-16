@@ -13,8 +13,10 @@ import {
     RotateCcw,
     Sliders,
     MousePointer,
+    Brain,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import DetectiveConfigTab from '@/components/detective/DetectiveConfigTab';
 
 export default function SettingsPage() {
     const {
@@ -546,6 +548,18 @@ export default function SettingsPage() {
                         <div className="text-purple-200/70 text-[11px] font-sans">Cancel connect mode</div>
                     </div>
                 </div>
+            </section>
+
+            {/* SECTION 6: AI Detective Configuration */}
+            <section className="bg-panel/50 border border-panel-border rounded-xl p-6 backdrop-blur-sm">
+                <div className="mb-6 flex items-center gap-3">
+                    <Brain className="w-6 h-6 text-sidebar-accent" />
+                    <div>
+                        <h2 className="text-xl font-bold text-panel-foreground">AI Detective</h2>
+                        <p className="text-sm text-panel-foreground/60">Configure your AI investigation assistant. Connect a cloud provider or use a local model.</p>
+                    </div>
+                </div>
+                <DetectiveConfigTab />
             </section>
         </div>
     );

@@ -3,8 +3,9 @@
 import React from 'react';
 import { useReactFlow } from 'reactflow';
 import useStore from '@/store/useStore';
-import { Download, Trash2, Upload, Link2, GitCommit, Undo2, Redo2 } from 'lucide-react';
+import { Download, Trash2, Upload, Link2, GitCommit, Undo2, Redo2, Brain } from 'lucide-react';
 import { toast } from 'sonner';
+import useDetectiveStore from '@/store/detectiveStore';
 
 const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
     const addNode = useStore((state) => state.addNode);
@@ -26,6 +27,8 @@ const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
     const setTheme = useStore((state) => state.setTheme);
     const theme = useStore((state) => state.theme);
     const reactFlow = useReactFlow();
+    const toggleDetective = useDetectiveStore((state) => state.togglePanel);
+    const isDetectiveOpen = useDetectiveStore((state) => state.isPanelOpen);
 
     if (isReadOnly) return null;
 
@@ -289,6 +292,20 @@ const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
                     <Redo2 size={16} />
                 </button>
             </div>
+
+            <button
+                onClick={toggleDetective}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${isDetectiveOpen
+                    ? 'bg-amber-500/20 text-amber-500 ring-2 ring-amber-400'
+                    : 'hover:bg-[var(--sidebar-accent)]/10 text-[var(--panel-foreground)]'
+                    }`}
+                title="AI Detective"
+            >
+                <Brain size={18} />
+                <span className="hidden sm:inline">Detective</span>
+            </button>
+
+            <div className="w-px h-6 bg-[var(--panel-border)] mx-1"></div>
 
             <label className="p-2 hover:bg-[var(--sidebar-accent)]/10 hover:text-[var(--sidebar-accent)] rounded-lg text-[var(--panel-foreground)]/70 transition-colors cursor-pointer" title="Import JSON">
                 <Upload size={18} />

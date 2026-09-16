@@ -73,6 +73,7 @@ export type RFState = {
     setActiveColor: (color: string) => void;
     connectMode: boolean;
     toggleConnectMode: () => void;
+    setConnectMode: (mode: boolean) => void;
 
     // Canvas & Editor Preferences
     autoSaveEnabled: boolean;
@@ -377,6 +378,7 @@ const useStore = create<RFState>()(
 
             connectMode: false,
             toggleConnectMode: () => set({ connectMode: !get().connectMode, sourceNodeId: null }),
+            setConnectMode: (connectMode) => set({ connectMode, sourceNodeId: connectMode ? get().sourceNodeId : null }),
             setSourceNodeId: (sourceNodeId) => set({ sourceNodeId }),
 
             // Canvas & Editor Preferences (Persisted)
