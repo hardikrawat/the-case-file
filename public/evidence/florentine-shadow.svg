@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="vignette" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#3d2817"/>
+      <stop offset="50%" stop-color="#1e130a"/>
+      <stop offset="100%" stop-color="#080402"/>
+    </radialGradient>
+    <linearGradient id="goldFrame" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d4af37"/>
+      <stop offset="25%" stop-color="#aa7c11"/>
+      <stop offset="50%" stop-color="#f3e5ab"/>
+      <stop offset="75%" stop-color="#8a6208"/>
+      <stop offset="100%" stop-color="#553c02"/>
+    </linearGradient>
+    <linearGradient id="faceLight" x1="20%" y1="20%" x2="80%" y2="80%">
+      <stop offset="0%" stop-color="#e8c8a9"/>
+      <stop offset="60%" stop-color="#c49a72"/>
+      <stop offset="100%" stop-color="#5c3818"/>
+    </linearGradient>
+    <filter id="canvasTexture">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" result="noise"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.15 0" in="noise" result="coloredNoise"/>
+      <feComposite operator="in" in2="SourceGraphic"/>
+    </filter>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="600" height="600" fill="url(#vignette)"/>
+
+  <!-- Baroque Figure Silhouette -->
+  <!-- Cloak / Robes -->
+  <path d="M 120,600 C 140,420 180,380 230,340 C 200,320 170,350 140,420 C 110,490 100,560 120,600 Z" fill="#120c08"/>
+  <path d="M 480,600 C 460,420 420,380 370,340 C 400,320 430,350 460,420 C 490,490 500,560 480,600 Z" fill="#120c08"/>
+  <path d="M 210,340 C 230,420 250,550 200,600 L 400,600 C 350,550 370,420 390,340 Z" fill="#1a110a"/>
+  
+  <!-- Velvet Collar with Gold Filigree -->
+  <path d="M 220,340 Q 300,380 380,340 Q 300,355 220,340 Z" fill="#aa7c11"/>
+  <path d="M 235,340 Q 300,370 365,340" stroke="#f3e5ab" stroke-width="3" fill="none"/>
+
+  <!-- Neck -->
+  <path d="M 265,300 L 265,345 Q 300,355 335,345 L 335,300 Z" fill="#a0744e"/>
+
+  <!-- Face (Chiaroscuro) -->
+  <ellipse cx="300" cy="250" rx="65" ry="85" fill="url(#faceLight)"/>
+  
+  <!-- Shadow side of face -->
+  <path d="M 300,165 C 340,170 365,210 365,260 C 365,310 335,335 300,335 Z" fill="#2d1708" opacity="0.6"/>
+
+  <!-- Eyes and Features -->
+  <ellipse cx="275" cy="235" rx="8" ry="5" fill="#23140a"/>
+  <ellipse cx="273" cy="234" rx="2" ry="2" fill="#ffffff" opacity="0.7"/>
+  <ellipse cx="325" cy="235" rx="7" ry="4" fill="#1b0e06"/>
+  <!-- Nose shadow -->
+  <path d="M 292,225 L 290,265 L 305,267 Z" fill="#5a3314" opacity="0.7"/>
+  <!-- Mouth -->
+  <path d="M 285,290 Q 300,295 315,290" stroke="#421e0d" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Renaissance Beret / Hat -->
+  <path d="M 210,210 C 200,140 280,100 370,120 C 430,135 410,200 390,215 C 340,195 260,195 210,210 Z" fill="#0d0805"/>
+  <circle cx="230" cy="180" r="14" fill="#aa7c11"/>
+  <circle cx="230" cy="180" r="8" fill="#d4af37"/>
+  <path d="M 230,170 Q 210,130 180,120" stroke="#e8c8a9" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.8"/>
+
+  <!-- Varnish Cracks / Aging Lines -->
+  <path d="M 150,100 Q 220,180 210,320" stroke="#000000" stroke-width="0.8" fill="none" opacity="0.25"/>
+  <path d="M 450,200 Q 380,300 410,480" stroke="#000000" stroke-width="0.8" fill="none" opacity="0.25"/>
+  <path d="M 280,50 Q 300,180 260,350" stroke="#000000" stroke-width="0.6" fill="none" opacity="0.2"/>
+
+  <!-- Museum Plaque overlay -->
+  <rect x="140" y="530" width="320" height="50" rx="4" fill="#15110c" stroke="#aa7c11" stroke-width="2"/>
+  <text x="300" y="552" font-family="'Georgia', serif" font-size="14" font-weight="bold" fill="#f3e5ab" text-anchor="middle" letter-spacing="2">
+    THE FLORENTINE SHADOW
+  </text>
+  <text x="300" y="570" font-family="'Georgia', serif" font-size="11" fill="#c49a72" text-anchor="middle" font-style="italic">
+    Matteo da Milano • c. 1512 • Stolen Oct 14
+  </text>
+</svg>
