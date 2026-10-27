@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useUser } from '@/hooks/useUser';
+import { getRankTitle } from '@/lib/ranks';
+import AppleSpinner from '@/components/ui/AppleSpinner';
 
 interface UserProfile {
     id: string;
@@ -29,6 +31,7 @@ export default function ProfilePage() {
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({ name: '', bio: '', avatarUrl: '' });
     const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
     const isOwnProfile = currentUser?.id === params.id;
 
@@ -61,7 +64,7 @@ export default function ProfilePage() {
     }, [loadProfile]);
 
     const handleSave = async () => {
-        setIsLoading(true);
+        setIsSaving(true);
         try {
             const response = await fetch(`/api/profile/${params.id}`, {
                 method: 'PUT',
@@ -79,17 +82,14 @@ export default function ProfilePage() {
         } catch {
             toast.error('An error occurred');
         } finally {
-            setIsLoading(false);
+            setIsSaving(false);
         }
     };
 
     if (isLoading) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center transition-colors duration-500">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sidebar-accent mx-auto mb-4"></div>
-                    <p className="text-sidebar-accent font-mono animate-pulse">RETRIEVING FILE...</p>
-                </div>
+                <AppleSpinner size="xl" label="RETRIEVING FILE..." />
             </div>
         );
     }
@@ -108,17 +108,7 @@ export default function ProfilePage() {
         );
     }
 
-    // Calculate rank for the displayed profile (not necessarily the current user)
-    // Simple calc for display purposes if not passed from backend
-    const getRank = (points: number) => {
-        if (points >= 1000) return "Chief Detective";
-        if (points >= 500) return "Senior Investigator";
-        if (points >= 200) return "Private Eye";
-        if (points >= 50) return "Rookie Cop";
-        return "Patrol Officer";
-    };
-
-    const displayRank = getRank(profile.reputation || 0);
+    const displayRank = getRankTitle(profile.reputation || 0);
 
     return (
         <div className="min-h-screen bg-background p-4 md:p-8 overflow-y-auto transition-colors duration-500">
@@ -206,7 +196,12 @@ export default function ProfilePage() {
                                 </h2>
 
                                 {isEditing ? (
-                                    <div className="space-y-4 bg-background/50 p-6 rounded border border-panel-border shadow-inner">
+                                    <div className="space-y-4 bg-background/50 p-6 rounded border border-panel-border shadow-inner relative overflow-hidden">
+                                        {isSaving && (
+                                            <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center z-20 animate-in fade-in duration-200">
+                                                <AppleSpinner size="md" label="Updating dossier..." />
+                                            </div>
+                                        )}
                                         <div>
                                             <label className="block text-xs font-bold uppercase mb-1 opacity-70">Full Name</label>
                                             <input
@@ -214,6 +209,7 @@ export default function ProfilePage() {
                                                 value={editForm.name}
                                                 onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                                                 className="w-full bg-background border-b-2 border-panel-border p-2 focus:outline-none focus:border-sidebar-accent font-mono text-foreground"
+                                                disabled={isSaving}
                                             />
                                         </div>
                                         <div>
@@ -224,6 +220,7 @@ export default function ProfilePage() {
                                                 onChange={(e) => setEditForm({ ...editForm, avatarUrl: e.target.value })}
                                                 className="w-full bg-background border-b-2 border-panel-border p-2 focus:outline-none focus:border-sidebar-accent font-mono text-xs text-foreground"
                                                 placeholder="https://..."
+                                                disabled={isSaving}
                                             />
                                         </div>
                                         <div>
@@ -233,11 +230,31 @@ export default function ProfilePage() {
                                                 onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
                                                 rows={4}
                                                 className="w-full bg-background border-b-2 border-panel-border p-2 focus:outline-none focus:border-sidebar-accent font-mono resize-none text-foreground"
+                                                disabled={isSaving}
                                             />
                                         </div>
                                         <div className="flex gap-4 pt-4">
-                                            <button onClick={handleSave} className="bg-sidebar-accent text-sidebar-accent-foreground px-4 py-2 hover:bg-sidebar-accent/80 font-bold text-sm">SAVE CHANGES</button>
-                                            <button onClick={() => setIsEditing(false)} className="bg-panel-border text-panel-foreground px-4 py-2 hover:bg-panel-border/80 font-bold text-sm">CANCEL</button>
+                                            <button
+                                                onClick={handleSave}
+                                                disabled={isSaving}
+                                                className="bg-sidebar-accent text-sidebar-accent-foreground px-4 py-2 hover:bg-sidebar-accent/80 font-bold text-sm flex items-center gap-2 disabled:opacity-50"
+                                            >
+                                                {isSaving ? (
+                                                    <>
+                                                        <AppleSpinner size="sm" />
+                                                        <span>SAVING...</span>
+                                                    </>
+                                                ) : (
+                                                    'SAVE CHANGES'
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => setIsEditing(false)}
+                                                disabled={isSaving}
+                                                className="bg-panel-border text-panel-foreground px-4 py-2 hover:bg-panel-border/80 font-bold text-sm"
+                                            >
+                                                CANCEL
+                                            </button>
                                         </div>
                                     </div>
                                 ) : (

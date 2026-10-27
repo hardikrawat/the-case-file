@@ -15,7 +15,6 @@ export interface SearchResult {
     users: Array<{
         id: string;
         name: string | null;
-        email: string;
         avatarUrl: string | null;
     }>;
     totalResults: number;
@@ -42,11 +41,10 @@ export async function searchDatabase(query: string, userId?: string): Promise<Se
         .leftJoin(users, eq(boards.userId, users.id))
         .where(
             and(
-                or(
-                    like(boards.title, searchTerm),
-                    // Only show public boards or user's own boards
-                    ...(userId ? [eq(boards.userId, userId)] : [])
-                ),
+                like(boards.title, searchTerm),
+                userId
+                    ? or(eq(boards.isPublic, true), eq(boards.userId, userId))
+                    : eq(boards.isPublic, true),
                 isNull(boards.deletedAt) // Exclude soft-deleted boards
             )
         )
@@ -62,16 +60,15 @@ export async function searchDatabase(query: string, userId?: string): Promise<Se
         board => board.isPublic || board.userId === userId
     );
 
-    // Search users (names and emails - limited for privacy)
+    // Search users (names only - email omitted for privacy)
     const userResults = await db
         .select({
             id: users.id,
             name: users.name,
-            email: users.email,
             avatarUrl: users.avatarUrl,
         })
         .from(users)
-        .where(or(like(users.name, searchTerm), like(users.email, searchTerm)))
+        .where(like(users.name, searchTerm))
         .limit(10);
 
     return {

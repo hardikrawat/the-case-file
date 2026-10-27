@@ -10,6 +10,7 @@ vi.mock('reactflow', async () => {
         ...actual,
         useReactFlow: () => ({
             project: vi.fn((pos) => pos),
+            screenToFlowPosition: vi.fn((pos) => pos),
             getViewport: vi.fn(() => ({ x: 0, y: 0, zoom: 1 })),
         }),
     };
@@ -23,6 +24,8 @@ describe('Toolbar Component', () => {
         expect(screen.getByText('Text')).toBeInTheDocument();
         expect(screen.getByText('Image')).toBeInTheDocument();
         expect(screen.getByText('Article')).toBeInTheDocument();
+        expect(screen.getByText('Link')).toBeInTheDocument();
+        expect(screen.getByText('String')).toBeInTheDocument();
     });
 
     it('should call addNode when Sticky is clicked', () => {
@@ -72,6 +75,24 @@ describe('Toolbar Component', () => {
         }));
     });
 
+    it('should call addNode when Link is clicked', () => {
+        const addNodeSpy = vi.fn();
+        useStore.setState({ addNode: addNodeSpy });
+        render(<Toolbar />);
+        fireEvent.click(screen.getByText('Link'));
+        expect(addNodeSpy).toHaveBeenCalledWith(expect.objectContaining({
+            type: 'link',
+            data: expect.objectContaining({ title: 'Web Record', url: '' })
+        }));
+    });
+
+    it('should toggle connect mode when String is clicked', () => {
+        const toggleConnectModeSpy = vi.fn();
+        useStore.setState({ toggleConnectMode: toggleConnectModeSpy, connectMode: false });
+        render(<Toolbar />);
+        fireEvent.click(screen.getByText('String'));
+        expect(toggleConnectModeSpy).toHaveBeenCalledTimes(1);
+    });
 
     it('should change theme', () => {
         const setThemeSpy = vi.fn();
@@ -91,8 +112,6 @@ describe('Toolbar Component', () => {
 
         render(<Toolbar />);
 
-        // Assuming colors are rendered as buttons with color code title or style
-        // The code uses `title={c}`
         const colorBtn = screen.getByTitle('#fca5a5'); // 2nd color
         fireEvent.click(colorBtn);
 
@@ -131,28 +150,25 @@ describe('Toolbar Component', () => {
             const setNodesSpy = vi.fn();
             const setEdgesSpy = vi.fn();
             useStore.setState({ setNodes: setNodesSpy, setEdges: setEdgesSpy });
+            vi.spyOn(window, 'confirm').mockReturnValue(true);
 
             const { container } = render(<Toolbar />);
 
-            // Helper to get input
             const input = container.querySelector('input[type="file"]');
 
-            // Mock FileReader
             const mockFileReader = {
                 readAsText: vi.fn(),
                 onload: null as ((this: FileReader, ev: ProgressEvent<FileReader>) => void) | null,
                 result: '{"nodes":[{"id":"1"}], "edges":[]}'
             };
 
-            // Spy on window.FileReader
             vi.spyOn(window, 'FileReader').mockImplementation(() => mockFileReader as unknown as FileReader);
 
             const file = new File(['{"nodes":[{"id":"1"}], "edges":[]}'], 'test.json', { type: 'application/json' });
             fireEvent.change(input!, { target: { files: [file] } });
 
-            // Trigger onload manually since mock doesn't do it
             if (mockFileReader.onload) {
-                mockFileReader.onload({ target: { result: mockFileReader.result } } as unknown as ProgressEvent<FileReader>);
+                mockFileReader.onload.call(mockFileReader as unknown as FileReader, { target: { result: mockFileReader.result } } as unknown as ProgressEvent<FileReader>);
             }
 
             expect(mockFileReader.readAsText).toHaveBeenCalledWith(file);
@@ -160,13 +176,11 @@ describe('Toolbar Component', () => {
             expect(setEdgesSpy).toHaveBeenCalledWith([]);
         });
 
-
         it('should handle clear board with confirmation', () => {
             const setNodesSpy = vi.fn();
             const setEdgesSpy = vi.fn();
             useStore.setState({ setNodes: setNodesSpy, setEdges: setEdgesSpy });
 
-            // Mock confirm
             vi.spyOn(window, 'confirm').mockReturnValue(true);
 
             render(<Toolbar />);

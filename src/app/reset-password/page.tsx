@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import AppleSpinner from '@/components/ui/AppleSpinner';
 
 function ResetPasswordContent() {
     const router = useRouter();
@@ -91,26 +92,33 @@ function ResetPasswordContent() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-stone-950 via-stone-900 to-amber-950 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-[#fdf6e3] via-stone-100 to-amber-50 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
                 {/* Header */}
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold text-amber-500 font-serif mb-2">
                         The Case File
                     </h1>
-                    <p className="text-stone-400">Create a new password</p>
+                    <p className="text-stone-500">Create a new password</p>
                 </div>
 
                 {/* Reset Password Card */}
-                <div className="bg-stone-900/50 backdrop-blur-sm border border-amber-900/30 rounded-xl p-8 shadow-2xl">
-                    <h2 className="text-2xl font-bold text-stone-200 mb-2">Set New Password</h2>
-                    <p className="text-sm text-stone-400 mb-6">
+                <div className="bg-stone-100 backdrop-blur-sm border border-amber-200 rounded-xl p-8 shadow-2xl relative overflow-hidden">
+                    {/* Loading Overlay */}
+                    {isLoading && (
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 animate-in fade-in duration-200">
+                            <AppleSpinner size="lg" label="Resetting password..." />
+                        </div>
+                    )}
+
+                    <h2 className="text-2xl font-bold text-stone-900 mb-2">Set New Password</h2>
+                    <p className="text-sm text-stone-500 mb-6">
                         Choose a strong password to secure your account.
                     </p>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-stone-300 mb-2">
+                            <label htmlFor="password" className="block text-sm font-medium text-stone-800 mb-2">
                                 New Password
                             </label>
                             <input
@@ -119,7 +127,7 @@ function ResetPasswordContent() {
                                 required
                                 value={formData.password}
                                 onChange={(e) => handlePasswordChange(e.target.value)}
-                                className="w-full px-4 py-3 bg-stone-800/50 border border-stone-700 rounded-lg text-stone-200 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-transparent transition"
+                                className="w-full px-4 py-3 bg-stone-200/50 border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-transparent transition"
                                 placeholder="••••••••"
                                 disabled={isLoading}
                             />
@@ -144,7 +152,7 @@ function ResetPasswordContent() {
                         </div>
 
                         <div>
-                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-stone-300 mb-2">
+                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-stone-800 mb-2">
                                 Confirm Password
                             </label>
                             <input
@@ -153,7 +161,7 @@ function ResetPasswordContent() {
                                 required
                                 value={formData.confirmPassword}
                                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                className="w-full px-4 py-3 bg-stone-800/50 border border-stone-700 rounded-lg text-stone-200 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-transparent transition"
+                                className="w-full px-4 py-3 bg-stone-200/50 border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-transparent transition"
                                 placeholder="••••••••"
                                 disabled={isLoading}
                             />
@@ -162,9 +170,16 @@ function ResetPasswordContent() {
                         <button
                             type="submit"
                             disabled={isLoading || !isPasswordValid}
-                            className="w-full py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-semibold rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-900 font-semibold rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                            {isLoading ? 'Resetting...' : 'Reset Password'}
+                            {isLoading ? (
+                                <>
+                                    <AppleSpinner size="sm" />
+                                    <span>Resetting Password...</span>
+                                </>
+                            ) : (
+                                'Reset Password'
+                            )}
                         </button>
                     </form>
 
@@ -182,9 +197,7 @@ function ResetPasswordContent() {
 export default function ResetPasswordPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-stone-950 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
-            </div>
+            <AppleSpinner fullscreen size="xl" label="Verifying reset credentials..." />
         }>
             <ResetPasswordContent />
         </Suspense>
@@ -199,7 +212,7 @@ function PasswordRequirement({ met, children }: { met: boolean; children: React.
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
             ) : (
-                <svg className="w-4 h-4 text-stone-600" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-4 h-4 text-stone-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
             )}

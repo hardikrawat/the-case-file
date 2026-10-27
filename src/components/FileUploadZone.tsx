@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import Image from 'next/image';
 import { X, FileImage } from 'lucide-react';
 import { toast } from 'sonner';
-import ProgressBar from '@/components/ui/ProgressBar';
+import AppleSpinner from '@/components/ui/AppleSpinner';
 
 interface FileUploadProps {
     onUploadComplete?: (url: string) => void;
@@ -60,9 +60,14 @@ export function FileUploadZone({
 
         const files = Array.from(e.dataTransfer.files);
         if (files.length > 0) {
-            handleUpload(files[0]);
+            const file = files[0];
+            if (accept && !file.type.match(accept.replace('*', '.*'))) {
+                toast.error('Invalid file type');
+                return;
+            }
+            handleUpload(file);
         }
-    }, [handleUpload]);
+    }, [handleUpload, accept]);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -84,7 +89,7 @@ export function FileUploadZone({
         <div className="w-full">
             {uploadedUrl ? (
                 <div className="relative group">
-                    <div className="relative w-full h-48 rounded-lg overflow-hidden border border-stone-700">
+                    <div className="relative w-full h-48 rounded-lg overflow-hidden border border-[var(--panel-border)]">
                         <Image
                             src={uploadedUrl}
                             alt="Uploaded"
@@ -96,7 +101,7 @@ export function FileUploadZone({
                     <button
                         onClick={() => {
                             setUploadedUrl(null);
-                            onUploadComplete?.('');
+                            onUploadComplete?.(null as unknown as string);
                         }}
                         className="absolute top-2 right-2 p-2 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                     >
@@ -109,8 +114,8 @@ export function FileUploadZone({
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     className={`relative border-2 border-dashed rounded-xl p-8 transition-all ${isDragging
-                        ? 'border-amber-500 bg-amber-500/10'
-                        : 'border-stone-700 bg-stone-900/30 hover:border-stone-600'
+                        ? 'border-[var(--sidebar-accent)] bg-[var(--sidebar-accent)]/10'
+                        : 'border-[var(--panel-border)] bg-[var(--panel-background)]/50 hover:border-[var(--sidebar-accent)]/50'
                         }`}
                 >
                     <input
@@ -124,17 +129,20 @@ export function FileUploadZone({
 
                     <div className="flex flex-col items-center gap-3 text-center pointer-events-none">
                         {isUploading ? (
-                            <ProgressBar isIndeterminate label="Uploading..." className="max-w-[150px]" />
+                            <div className="flex flex-col items-center gap-2 p-4">
+                                <AppleSpinner size="lg" className="text-[var(--sidebar-accent)]" />
+                                <span className="text-xs font-mono font-bold text-foreground uppercase tracking-wider">Uploading evidence...</span>
+                            </div>
                         ) : (
                             <>
-                                <div className="p-3 bg-stone-800 rounded-full">
-                                    <FileImage className="w-8 h-8 text-stone-400" />
+                                <div className="p-3 bg-[var(--background)] rounded-full border border-[var(--panel-border)]">
+                                    <FileImage className="w-8 h-8 text-[var(--panel-foreground)]/60" />
                                 </div>
                                 <div>
-                                    <p className="text-stone-200 font-medium mb-1">
+                                    <p className="text-[var(--foreground)] font-medium mb-1">
                                         Drop your file here or click to browse
                                     </p>
-                                    <p className="text-xs text-stone-500">
+                                    <p className="text-xs text-[var(--panel-foreground)]/60">
                                         Max size: {Math.round(maxSize / 1024 / 1024)}MB
                                     </p>
                                 </div>

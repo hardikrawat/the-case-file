@@ -10,7 +10,11 @@ vi.mock('../src/lib/db', () => ({
         select: vi.fn(),
         insert: vi.fn(),
         update: vi.fn(),
-        delete: vi.fn(), // If used
+        delete: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+                catch: vi.fn()
+            })
+        }),
     }
 }));
 
@@ -19,19 +23,17 @@ describe('Rate Limiter', () => {
         vi.clearAllMocks();
     });
 
-    it('should allow request if no record exists', async () => {
-        // Mock db.select to return empty array
-        (db.select as any).mockReturnValue({
-            from: vi.fn().mockReturnValue({
-                where: vi.fn().mockReturnValue({
-                    limit: vi.fn().mockResolvedValue([])
+    it('should allow request if within limit', async () => {
+        const expiresAt = new Date(Date.now() + 60000);
+        (db.insert as any).mockReturnValue({
+            values: vi.fn().mockReturnValue({
+                onConflictDoUpdate: vi.fn().mockReturnValue({
+                    returning: vi.fn().mockResolvedValue([{
+                        count: 1,
+                        expiresAt: expiresAt,
+                    }])
                 })
             })
-        });
-
-        // Mock db.insert
-        (db.insert as any).mockReturnValue({
-            values: vi.fn().mockResolvedValue(undefined)
         });
 
         const result = await checkRateLimit('test:1', 5, 60000);
@@ -40,17 +42,13 @@ describe('Rate Limiter', () => {
     });
 
     it('should block request if limit exceeded', async () => {
-        const now = Date.now();
-        const expiresAt = new Date(now + 60000); // Valid window
-
-        // Mock db.select to return existing record with max count
-        (db.select as any).mockReturnValue({
-            from: vi.fn().mockReturnValue({
-                where: vi.fn().mockReturnValue({
-                    limit: vi.fn().mockResolvedValue([{
-                        key: 'test:2',
-                        count: 5,
-                        expiresAt: expiresAt
+        const expiresAt = new Date(Date.now() + 60000);
+        (db.insert as any).mockReturnValue({
+            values: vi.fn().mockReturnValue({
+                onConflictDoUpdate: vi.fn().mockReturnValue({
+                    returning: vi.fn().mockResolvedValue([{
+                        count: 6,
+                        expiresAt: expiresAt,
                     }])
                 })
             })
@@ -60,31 +58,21 @@ describe('Rate Limiter', () => {
         expect(result.success).toBe(false);
     });
 
-    it('should reset limit if window expired', async () => {
-        const now = Date.now();
-        const expiresAt = new Date(now - 1000); // Expired
-
-        (db.select as any).mockReturnValue({
-            from: vi.fn().mockReturnValue({
-                where: vi.fn().mockReturnValue({
-                    limit: vi.fn().mockResolvedValue([{
-                        key: 'test:3',
-                        count: 5,
-                        expiresAt: expiresAt
+    it('should allow request when count resets on window expiry', async () => {
+        const expiresAt = new Date(Date.now() + 60000);
+        (db.insert as any).mockReturnValue({
+            values: vi.fn().mockReturnValue({
+                onConflictDoUpdate: vi.fn().mockReturnValue({
+                    returning: vi.fn().mockResolvedValue([{
+                        count: 1,
+                        expiresAt: expiresAt,
                     }])
                 })
             })
         });
 
-        (db.update as any).mockReturnValue({
-            set: vi.fn().mockReturnValue({
-                where: vi.fn().mockResolvedValue(undefined)
-            })
-        });
-
         const result = await checkRateLimit('test:3', 5, 60000);
         expect(result.success).toBe(true);
-        // Expect update to be called with count: 1
-        expect(db.update).toHaveBeenCalled();
+        expect(db.insert).toHaveBeenCalled();
     });
 });

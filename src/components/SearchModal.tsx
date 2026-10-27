@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import AppleSpinner from '@/components/ui/AppleSpinner';
 
 
 interface SearchResult {
@@ -15,7 +16,7 @@ interface SearchResult {
     users: Array<{
         id: string;
         name: string | null;
-        email: string;
+        avatarUrl?: string | null;
     }>;
 }
 
@@ -78,7 +79,7 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean; onCl
 
         return () => {
             document.removeEventListener('keydown', handleEscape);
-            document.body.style.overflow = 'unset';
+            document.body.style.overflow = '';
         };
     }, [isOpen, onClose]);
 
@@ -120,7 +121,7 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean; onCl
                         />
                         {isLoading && (
                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                <div className="w-5 h-5 border-2 border-[var(--sidebar-accent)] border-t-transparent rounded-full animate-spin" />
+                                <AppleSpinner size="sm" className="text-[var(--sidebar-accent)]" />
                             </div>
                         )}
                     </div>
@@ -206,11 +207,11 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean; onCl
                                             >
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-12 h-12 rounded-full bg-[var(--sidebar-accent)] flex items-center justify-center text-[var(--sidebar-accent-foreground)] font-black text-lg shadow-lg">
-                                                        {(user.name || user.email)[0].toUpperCase()}
+                                                        {(user.name || 'Agent')[0].toUpperCase()}
                                                     </div>
                                                     <div>
                                                         <p className="font-bold text-[var(--foreground)] group-hover:text-[var(--sidebar-accent)] transition-colors">{user.name || 'Anonymous'}</p>
-                                                        <p className="text-[10px] font-mono text-[var(--panel-foreground)]/40 uppercase tracking-tighter">{user.email}</p>
+                                                        <p className="text-[10px] font-mono text-[var(--panel-foreground)]/40 uppercase tracking-tighter">Agent Dossier</p>
                                                     </div>
                                                 </div>
                                             </Link>

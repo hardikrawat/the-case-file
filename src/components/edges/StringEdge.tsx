@@ -1,6 +1,8 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { BaseEdge, EdgeLabelRenderer, EdgeProps, useReactFlow } from 'reactflow';
-import { X } from 'lucide-react';
+import { Scissors } from 'lucide-react';
+import useStore from '@/store/useStore';
+import { useIsReadOnly } from '@/context/ReadOnlyContext';
 
 const StringEdge = ({
     id,
@@ -11,13 +13,20 @@ const StringEdge = ({
     style = {},
     markerEnd,
     selected,
+    data,
 }: EdgeProps) => {
-    const { setEdges } = useReactFlow();
+    const { getZoom } = useReactFlow();
+    const zoom = getZoom();
+    const [isHovered, setIsHovered] = useState(false);
+    const readOnlyContext = useIsReadOnly();
+    const isReadOnly = Boolean(data?.isReadOnly ?? readOnlyContext);
 
     // Custom Path: Physical "Sag" instead of just Bezier
     // We calculate a midpoint that is weighted downwards to simulate gravity
     const midX = (sourceX + targetX) / 2;
-    const midY = (sourceY + targetY) / 2 + Math.abs(targetX - sourceX) * 0.12; // Natural dip based on distance
+    const dist = Math.sqrt(Math.pow(targetX - sourceX, 2) + Math.pow(targetY - sourceY, 2));
+    const sag = dist * 0.08;
+    const midY = (sourceY + targetY) / 2 + sag;
 
     const edgePath = `M ${sourceX},${sourceY} Q ${midX},${midY} ${targetX},${targetY}`;
     const labelX = midX;
@@ -25,18 +34,33 @@ const StringEdge = ({
 
     const onEdgeClick = (evt: React.MouseEvent) => {
         evt.stopPropagation();
-        setEdges((edges) => edges.filter((e) => e.id !== id));
+        if (isReadOnly) return;
+        // Synchronize deletion with both Zustand store and local ReactFlow state
+        useStore.getState().deleteEdge(id);
     };
+
+    const showCutButton = (selected || isHovered) && !isReadOnly;
 
     return (
         <>
+            {/* Invisible wide interaction path for hover detection */}
+            <path
+                d={edgePath}
+                fill="none"
+                stroke="transparent"
+                strokeWidth={24}
+                className="react-flow__edge-interaction cursor-pointer"
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+            />
+
             <BaseEdge
                 path={edgePath}
                 markerEnd={markerEnd}
                 style={{
                     ...style,
                     strokeWidth: 5,
-                    stroke: selected ? '#ef4444' : '#991b1b', // Darker base for texture
+                    stroke: selected || isHovered ? '#ef4444' : '#991b1b', // Darker base for texture
                     filter: "url('#yarn-texture') drop-shadow(1px 3px 3px rgba(0,0,0,0.5))",
                     transition: 'stroke 0.2s, filter 0.2s',
                     strokeLinecap: 'round',
@@ -65,23 +89,28 @@ const StringEdge = ({
                     strokeDasharray: '2, 6',
                 }}
             />
-            {selected && (
+
+            {showCutButton && (
                 <EdgeLabelRenderer>
                     <div
                         style={{
                             position: 'absolute',
-                            transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+                            transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px) scale(${Math.min(2.5, Math.max(0.7, 1 / (zoom || 1)))})`,
                             fontSize: 12,
                             pointerEvents: 'all',
                         }}
                         className="nodrag nopan"
+                        onMouseEnter={() => setIsHovered(true)}
+                        onMouseLeave={() => setIsHovered(false)}
                     >
                         <button
-                            className="bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 shadow-sm transition-colors"
+                            className="bg-red-600 hover:bg-red-700 text-white rounded-full p-1.5 shadow-lg hover:scale-110 transition-all flex items-center justify-center pointer-events-auto"
                             onClick={onEdgeClick}
-                            title="Cut String"
+                            title="Cut Connection String"
+                            aria-label="Sever connection string between evidence clues"
+                            data-testid={`cut-string-${id}`}
                         >
-                            <X size={12} />
+                            <Scissors size={12} className="rotate-90" />
                         </button>
                     </div>
                 </EdgeLabelRenderer>

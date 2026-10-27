@@ -7,14 +7,20 @@ export const authConfig = {
     trustHost: true,
     providers: [],
     callbacks: {
-        authorized({ auth, request: { nextUrl, headers } }) {
-            // Allow bypass in test environment
-            const isTestBypass = headers.get('x-test-bypass') === 'true';
-            if (isTestBypass) return true;
-
+        authorized({ auth, request: { nextUrl } }) {
             const isLoggedIn = !!auth?.user;
-            const protectedPaths = ['/cases', '/discover', '/settings', '/starred'];
-            const isOnProtected = protectedPaths.some(path => nextUrl.pathname.startsWith(path));
+            const protectedPaths = [
+                '/cases',
+                '/discover',
+                '/board',
+                '/profile',
+                '/leaderboard',
+                '/settings',
+                '/starred'
+            ];
+            const isOnProtected = protectedPaths.some(
+                path => nextUrl.pathname === path || nextUrl.pathname.startsWith(`${path}/`)
+            );
 
             if (isOnProtected) {
                 if (isLoggedIn) return true;

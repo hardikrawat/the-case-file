@@ -37,6 +37,9 @@ export async function verifyEmailToken(token: string): Promise<{ valid: boolean;
 
     // Check if token is expired
     if (new Date() > new Date(tokenData.expires)) {
+        // Delete expired token to prevent table bloat
+        await db.delete(emailVerificationTokens)
+            .where(eq(emailVerificationTokens.token, token));
         return { valid: false };
     }
 

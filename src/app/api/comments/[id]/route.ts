@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { comments } from '@/lib/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 const updateCommentSchema = z.object({
     content: z.string().min(1, 'Content is required').max(5000, 'Content too long'),
@@ -19,6 +20,11 @@ export async function PUT(
         const session = await auth();
         if (!session?.user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const rateLimit = await checkRateLimit(`comments:mutate:${session.user.id}`, 30, 60000);
+        if (!rateLimit.success) {
+            return NextResponse.json({ error: 'Too many requests. Please wait.' }, { status: 429 });
         }
 
         const body = await req.json();
@@ -83,6 +89,11 @@ export async function DELETE(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const rateLimit = await checkRateLimit(`comments:mutate:${session.user.id}`, 30, 60000);
+        if (!rateLimit.success) {
+            return NextResponse.json({ error: 'Too many requests. Please wait.' }, { status: 429 });
+        }
+
         // Verify ownership
         const existingComment = await db.select()
             .from(comments)
@@ -93,7 +104,15 @@ export async function DELETE(
             return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
         }
 
-        if (existingComment[0].userId !== session.user.id) {
+        const isAuthor = existingComment[0].userId === session.user.id;
+        let canModerate = false;
+        if (!isAuthor) {
+            const { getBoardAccess } = await import('@/lib/auth-checks');
+            const access = await getBoardAccess(existingComment[0].boardId, session.user.id);
+            canModerate = access.isOwner;
+        }
+
+        if (!isAuthor && !canModerate) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 

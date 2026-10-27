@@ -416,3 +416,18 @@ body {
   pointer-events: none;
   z-index: 10;
 }
+
+/* Classic Apple / Mac OS / iPhone 12-Spoke Activity Indicator */
+@keyframes apple-spinner-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-apple-spinner {
+  animation: apple-spinner-spin 1s steps(12, end) infinite;
+  transform-origin: center;
+}

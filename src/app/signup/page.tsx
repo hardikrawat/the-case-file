@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { signIn } from 'next-auth/react';
+import AppleSpinner from '@/components/ui/AppleSpinner';
 
 export default function SignupPage() {
     const router = useRouter();
@@ -78,7 +79,7 @@ export default function SignupPage() {
             }
 
             toast.success('Agent registered. Verification required.');
-            router.push(`/signup/verify?email=${encodeURIComponent(formData.email)}&token=${data.verificationToken}`);
+            router.push(`/signup/verify?email=${encodeURIComponent(formData.email)}`);
         } catch {
             toast.error('System error. Contact HQ.');
         } finally {
@@ -97,37 +98,44 @@ export default function SignupPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-screen bg-[#fdf6e3] flex items-center justify-center p-4 relative overflow-hidden">
             {/* Background Atmosphere */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-stone-900 via-black to-black opacity-80 z-0"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-stone-200 via-stone-100 to-[#fdf6e3] opacity-80 z-0"></div>
 
             {/* Spotlight Effect */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-amber-900/10 blur-[120px] rounded-full pointer-events-none z-0"></div>
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-amber-500/10 blur-[120px] rounded-full pointer-events-none z-0"></div>
 
             <div className="w-full max-w-md relative z-10">
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-amber-600 font-serif tracking-widest mb-2 uppercase drop-shadow-lg">
+                    <h1 className="text-4xl font-bold text-amber-800 font-serif tracking-widest mb-2 uppercase drop-shadow-lg">
                         NEW RECRUIT
                     </h1>
                     <p className="text-stone-500 font-mono text-xs tracking-[0.2em] uppercase">Initiate Protocol 77-B</p>
                 </div>
 
                 {/* Form Card */}
-                <div className="bg-[#1c1917] border border-stone-800 p-8 shadow-2xl relative">
-                    {/* Corner Brackets */}
-                    <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-amber-800/50"></div>
-                    <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-amber-800/50"></div>
-                    <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-amber-800/50"></div>
-                    <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-amber-800/50"></div>
+                <div className="bg-white border border-stone-300 p-8 shadow-2xl relative overflow-hidden">
+                    {/* Loading Overlay */}
+                    {isLoading && (
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 animate-in fade-in duration-200">
+                            <AppleSpinner size="lg" label="Registering operative..." />
+                        </div>
+                    )}
 
-                    <h2 className="text-xl font-mono text-stone-300 mb-6 border-b border-stone-800 pb-2">
+                    {/* Corner Brackets */}
+                    <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-amber-600/50"></div>
+                    <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-amber-600/50"></div>
+                    <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-amber-600/50"></div>
+                    <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-amber-600/50"></div>
+
+                    <h2 className="text-xl font-mono text-stone-800 mb-6 border-b border-stone-300 pb-2">
                         &gt; AGENT REGISTRATION
                     </h2>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="group">
-                            <label htmlFor="name" className="block text-xs font-bold text-amber-700 uppercase mb-1 tracking-wider">
+                            <label htmlFor="name" className="block text-xs font-bold text-amber-800 uppercase mb-1 tracking-wider">
                                 Full Name
                             </label>
                             <input
@@ -136,14 +144,14 @@ export default function SignupPage() {
                                 required
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="w-full bg-transparent border-b border-stone-700 py-2 text-stone-300 placeholder-stone-700 focus:outline-none focus:border-amber-600 focus:bg-stone-900/30 transition-colors font-mono"
+                                className="w-full bg-transparent border-b border-stone-300 py-2 text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-600 focus:bg-stone-50 transition-colors font-mono"
                                 placeholder="Sherlock Holmes"
                                 disabled={isLoading}
                             />
                         </div>
 
                         <div className="group">
-                            <label htmlFor="email" className="block text-xs font-bold text-amber-700 uppercase mb-1 tracking-wider">
+                            <label htmlFor="email" className="block text-xs font-bold text-amber-800 uppercase mb-1 tracking-wider">
                                 Agent ID (Email)
                             </label>
                             <input
@@ -152,14 +160,14 @@ export default function SignupPage() {
                                 required
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                className="w-full bg-transparent border-b border-stone-700 py-2 text-stone-300 placeholder-stone-700 focus:outline-none focus:border-amber-600 focus:bg-stone-900/30 transition-colors font-mono"
+                                className="w-full bg-transparent border-b border-stone-300 py-2 text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-600 focus:bg-stone-50 transition-colors font-mono"
                                 placeholder="detective@example.com"
                                 disabled={isLoading}
                             />
                         </div>
 
                         <div className="group">
-                            <label htmlFor="password" className="block text-xs font-bold text-amber-700 uppercase mb-1 tracking-wider">
+                            <label htmlFor="password" className="block text-xs font-bold text-amber-800 uppercase mb-1 tracking-wider">
                                 Set Passcode
                             </label>
                             <input
@@ -168,14 +176,14 @@ export default function SignupPage() {
                                 required
                                 value={formData.password}
                                 onChange={(e) => handlePasswordChange(e.target.value)}
-                                className="w-full bg-transparent border-b border-stone-700 py-2 text-stone-300 placeholder-stone-700 focus:outline-none focus:border-amber-600 focus:bg-stone-900/30 transition-colors font-mono"
+                                className="w-full bg-transparent border-b border-stone-300 py-2 text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-600 focus:bg-stone-50 transition-colors font-mono"
                                 placeholder="••••••••"
                                 disabled={isLoading}
                             />
 
                             {/* Password Strength Indicators */}
                             {formData.password && (
-                                <div className="mt-3 space-y-1 bg-stone-900/50 p-2 rounded border border-stone-800">
+                                <div className="mt-3 space-y-1 bg-stone-100 p-2 rounded border border-stone-300">
                                     <PasswordRequirement met={passwordStrength.hasMinLength}>
                                         MIN LENGTH: 8
                                     </PasswordRequirement>
@@ -193,7 +201,7 @@ export default function SignupPage() {
                         </div>
 
                         <div className="group">
-                            <label htmlFor="confirmPassword" className="block text-xs font-bold text-amber-700 uppercase mb-1 tracking-wider">
+                            <label htmlFor="confirmPassword" className="block text-xs font-bold text-amber-800 uppercase mb-1 tracking-wider">
                                 Confirm Passcode
                             </label>
                             <input
@@ -202,7 +210,7 @@ export default function SignupPage() {
                                 required
                                 value={formData.confirmPassword}
                                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                className="w-full bg-transparent border-b border-stone-700 py-2 text-stone-300 placeholder-stone-700 focus:outline-none focus:border-amber-600 focus:bg-stone-900/30 transition-colors font-mono"
+                                className="w-full bg-transparent border-b border-stone-300 py-2 text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-600 focus:bg-stone-50 transition-colors font-mono"
                                 placeholder="••••••••"
                                 disabled={isLoading}
                             />
@@ -211,19 +219,26 @@ export default function SignupPage() {
                         <button
                             type="submit"
                             disabled={isLoading || !isPasswordValid}
-                            className="w-full py-3 px-4 bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold uppercase tracking-widest border border-stone-600 hover:border-amber-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:translate-y-0.5"
+                            className="w-full py-3 px-4 bg-stone-200 hover:bg-stone-300 text-stone-900 font-bold uppercase tracking-widest border border-stone-600 hover:border-amber-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:translate-y-0.5 flex items-center justify-center gap-2"
                         >
-                            {isLoading ? 'Processing...' : 'Submit Profile'}
+                            {isLoading ? (
+                                <>
+                                    <AppleSpinner size="sm" />
+                                    <span>Registering Operative...</span>
+                                </>
+                            ) : (
+                                'Submit Profile'
+                            )}
                         </button>
                     </form>
 
                     {/* Divider */}
                     <div className="relative my-8">
                         <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-stone-800"></div>
+                            <div className="w-full border-t border-stone-300"></div>
                         </div>
                         <div className="relative flex justify-center text-xs">
-                            <span className="px-2 bg-[#1c1917] text-stone-600 font-mono uppercase">Alternative Channels</span>
+                            <span className="px-2 bg-white text-stone-500 font-mono uppercase">Alternative Channels</span>
                         </div>
                     </div>
 
@@ -232,7 +247,7 @@ export default function SignupPage() {
                         <button
                             onClick={() => handleOAuthSignIn('github')}
                             disabled={isLoading}
-                            className="w-full py-2 px-4 bg-transparent border border-stone-700 text-stone-400 font-mono text-sm hover:text-stone-200 hover:border-stone-500 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
+                            className="w-full py-2 px-4 bg-transparent border border-stone-300 text-stone-500 font-mono text-sm hover:text-stone-900 hover:border-stone-500 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
                         >
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
@@ -243,7 +258,7 @@ export default function SignupPage() {
                         <button
                             onClick={() => handleOAuthSignIn('google')}
                             disabled={isLoading}
-                            className="w-full py-2 px-4 bg-transparent border border-stone-700 text-stone-400 font-mono text-sm hover:text-stone-200 hover:border-stone-500 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
+                            className="w-full py-2 px-4 bg-transparent border border-stone-300 text-stone-500 font-mono text-sm hover:text-stone-900 hover:border-stone-500 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
                         >
                             <svg className="w-4 h-4" viewBox="0 0 24 24">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -259,7 +274,7 @@ export default function SignupPage() {
                     {/* Login Link */}
                     <p className="mt-8 text-center text-xs font-mono text-stone-500">
                         ALREADY CLEARED?{' '}
-                        <Link href="/login" className="text-amber-600 hover:text-amber-500 font-bold transition">
+                        <Link href="/login" className="text-amber-800 hover:text-amber-500 font-bold transition">
                             [ IDENTIFY ]
                         </Link>
                     </p>
@@ -267,7 +282,7 @@ export default function SignupPage() {
 
                 {/* Back to Home */}
                 <div className="text-center mt-8">
-                    <Link href="/" className="text-xs font-mono text-stone-600 hover:text-stone-400 transition">
+                    <Link href="/" className="text-xs font-mono text-stone-500 hover:text-stone-500 transition">
                         {/* ABORT AND RETURN TO HOME */}
                     </Link>
                 </div>
@@ -284,7 +299,7 @@ function PasswordRequirement({ met, children }: { met: boolean; children: React.
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
             ) : (
-                <svg className="w-4 h-4 text-stone-600" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-4 h-4 text-stone-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
             )}

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users, boards, userReputation } from '@/lib/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { z } from 'zod';
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -19,8 +19,18 @@ export async function GET(
 ) {
     try {
         const params = await props.params;
-        // Get user profile
-        const userProfile = await db.select()
+        const session = await auth();
+        const isOwner = !!(session?.user?.id && session.user.id === params.id);
+
+        // Get user profile (explicit column selection)
+        const userProfile = await db.select({
+            id: users.id,
+            name: users.name,
+            email: users.email,
+            bio: users.bio,
+            avatarUrl: users.avatarUrl,
+            createdAt: users.createdAt,
+        })
             .from(users)
             .where(eq(users.id, params.id))
             .limit(1);
@@ -31,10 +41,18 @@ export async function GET(
 
         const user = userProfile[0];
 
-        // Get user's boards count
-        const userBoards = await db.select()
+        // Get user's boards count: non-owners only count public boards
+        const boardConditions = [
+            eq(boards.userId, params.id),
+            isNull(boards.deletedAt),
+        ];
+        if (!isOwner) {
+            boardConditions.push(eq(boards.isPublic, true));
+        }
+
+        const userBoards = await db.select({ id: boards.id })
             .from(boards)
-            .where(eq(boards.userId, params.id));
+            .where(and(...boardConditions));
 
         // Get reputation if exists
         const reputation = await db.select()
@@ -42,15 +60,23 @@ export async function GET(
             .where(eq(userReputation.userId, params.id))
             .limit(1);
 
-        return NextResponse.json({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const responsePayload: Record<string, any> = {
             id: user.id,
             name: user.name,
-            email: user.email,
             bio: user.bio,
             avatarUrl: user.avatarUrl,
+            createdAt: user.createdAt,
             boardsCount: userBoards.length,
             reputation: reputation.length > 0 ? reputation[0].points : 0,
-        });
+        };
+
+        // Privacy Hardening: only expose email to account owner
+        if (isOwner) {
+            responsePayload.email = user.email;
+        }
+
+        return NextResponse.json(responsePayload);
     } catch (error) {
         console.error('Profile fetch error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -112,7 +138,12 @@ export async function PUT(
         const updated = await db.update(users)
             .set(updateData)
             .where(eq(users.id, params.id))
-            .returning();
+            .returning({
+                id: users.id,
+                name: users.name,
+                bio: users.bio,
+                avatarUrl: users.avatarUrl,
+            });
 
         return NextResponse.json(updated[0]);
     } catch (error) {

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { twMerge } from 'tailwind-merge';
+import AppleSpinner from './AppleSpinner';
 
 interface ProgressBarProps {
     progress?: number; // 0 to 100
@@ -11,6 +12,19 @@ interface ProgressBarProps {
 }
 
 const ProgressBar = ({ progress = 0, label, className, isIndeterminate = false }: ProgressBarProps) => {
+    if (isIndeterminate) {
+        return (
+            <div className={twMerge('inline-flex items-center gap-2.5', className)}>
+                <AppleSpinner size="sm" />
+                {label && (
+                    <span className="text-xs font-mono font-medium text-foreground tracking-wide">
+                        {label}
+                    </span>
+                )}
+            </div>
+        );
+    }
+
     return (
         <div className={twMerge('flex flex-col gap-1.5 w-full max-w-[200px]', className)}>
             {label && (
@@ -18,34 +32,20 @@ const ProgressBar = ({ progress = 0, label, className, isIndeterminate = false }
                     <span className="text-[10px] uppercase font-serif tracking-widest text-panel-foreground opacity-60 font-bold">
                         {label}
                     </span>
-                    {!isIndeterminate && (
-                        <span className="text-[10px] font-mono text-panel-foreground opacity-40">
-                            {Math.round(progress)}%
-                        </span>
-                    )}
+                    <span className="text-[10px] font-mono text-panel-foreground opacity-40">
+                        {Math.round(progress)}%
+                    </span>
                 </div>
             )}
 
             <div className="h-2 w-full investigation-track rounded-full overflow-hidden relative">
                 <div
-                    className={twMerge(
-                        "h-full red-string transition-all duration-500 ease-out rounded-full",
-                        isIndeterminate && "w-1/3 animate-[indeterminate-string_1.5s_infinite_ease-in-out]"
-                    )}
+                    className="h-full red-string transition-all duration-500 ease-out rounded-full"
                     style={{
-                        width: isIndeterminate ? undefined : `${progress}%`,
-                        // Add some CSS-in-JS for the indeterminate animation if not in globals.css
+                        width: `${progress}%`,
                     }}
                 />
             </div>
-
-            <style jsx>{`
-                @keyframes indeterminate-string {
-                    0% { transform: translateX(-100%) skewX(-20deg); }
-                    50% { transform: translateX(100%) skewX(20deg); }
-                    100% { transform: translateX(300%) skewX(-20deg); }
-                }
-            `}</style>
         </div>
     );
 };

@@ -74,7 +74,7 @@ const BoardPreview: React.FC<BoardPreviewProps> = ({ nodes, edges, className }) 
 
     if (!nodes || nodes.length === 0) {
         return (
-            <div className={twMerge("w-full h-full flex flex-col items-center justify-center bg-stone-100/5 dark:bg-stone-800/20 text-stone-500", className)}>
+            <div className={twMerge("w-full h-full flex flex-col items-center justify-center bg-[var(--panel-background)]/20 text-[var(--panel-foreground)]/50", className)}>
                 <div className="w-12 h-16 border-2 border-dashed border-current rounded mb-2 opacity-50" />
                 <span className="text-[10px] font-mono uppercase tracking-widest opacity-70">Empty Case File</span>
             </div>
@@ -84,7 +84,7 @@ const BoardPreview: React.FC<BoardPreviewProps> = ({ nodes, edges, className }) 
     return (
         <svg
             viewBox={viewBox}
-            className={twMerge("w-full h-full bg-stone-50/50 dark:bg-stone-900/50", className)}
+            className={twMerge("w-full h-full bg-[var(--background)]/50", className)}
             preserveAspectRatio="xMidYMid meet"
         >
             {/* Edges */}

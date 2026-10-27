@@ -19,11 +19,17 @@ vi.mock('@/auth', () => ({
     auth: vi.fn(),
 }));
 
+// Mock reputation
+vi.mock('@/lib/reputation', () => ({
+    awardPoints: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock DB
 vi.mock('@/lib/db', () => ({
     db: {
         select: vi.fn().mockReturnThis(),
         from: vi.fn().mockReturnThis(),
+        leftJoin: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
         limit: vi.fn().mockResolvedValue([]),
         orderBy: vi.fn().mockResolvedValue([]),
@@ -46,14 +52,26 @@ vi.mock('@/lib/rate-limit', () => ({
     checkRateLimit: vi.fn().mockResolvedValue({ success: true, reset: Date.now() + 60000 }),
 }));
 
+import { getBoardAccess } from '@/lib/auth-checks';
+
+// Mock auth-checks
+vi.mock('@/lib/auth-checks', () => ({
+    getBoardAccess: vi.fn().mockResolvedValue({
+        board: { id: 'board-1', isPublic: true },
+        canView: true,
+        canEdit: true,
+        isOwner: false,
+    }),
+}));
+
 // Helper to create NextRequest with search params
 const createRequest = (body: any = null, searchParams: Record<string, string> = {}) => {
     const url = new URL('http://localhost:3000/api/comments');
-    Object.entries(searchParams).forEach(([key, value]) => url.searchParams.append(key, value));
-
+    Object.entries(searchParams).forEach(([k, v]) => url.searchParams.set(k, v));
     return {
         url: url.toString(),
-        json: async () => body,
+        json: () => Promise.resolve(body),
+        headers: new Map(),
     } as unknown as NextRequest;
 };
 
@@ -64,13 +82,13 @@ describe('/api/comments', () => {
 
     describe('GET', () => {
         it('should return 401 if unauthorized', async () => {
-            vi.mocked(auth).mockResolvedValue(null);
+            vi.mocked(auth).mockResolvedValue(null as any);
             const req = createRequest(null, { boardId: 'board-1' });
             const response = await GET(req) as any;
             expect(response.status).toBe(401);
         });
 
-        it('should return 400 if boardId is missing', async () => {
+        it('should return 400 if boardId missing', async () => {
             vi.mocked(auth).mockResolvedValue({ user: { id: 'user-1' } } as any);
             const req = createRequest();
             const response = await GET(req) as any;
@@ -81,8 +99,9 @@ describe('/api/comments', () => {
             vi.mocked(auth).mockResolvedValue({ user: { id: 'user-1' } } as any);
             vi.mocked(db.select).mockReturnValue({
                 from: vi.fn().mockReturnThis(),
+                leftJoin: vi.fn().mockReturnThis(),
                 where: vi.fn().mockReturnThis(),
-                orderBy: vi.fn().mockResolvedValue([{ id: 'c1', content: 'test' }]),
+                orderBy: vi.fn().mockResolvedValue([{ id: 'c1', content: 'test', userName: 'Detective' }]),
             } as any);
 
             const req = createRequest(null, { boardId: 'board-1' });
@@ -94,7 +113,7 @@ describe('/api/comments', () => {
 
     describe('POST', () => {
         it('should return 401 if unauthorized', async () => {
-            vi.mocked(auth).mockResolvedValue(null);
+            vi.mocked(auth).mockResolvedValue(null as any);
             const req = createRequest({});
             const response = await POST(req) as any;
             expect(response.status).toBe(401);
@@ -122,10 +141,10 @@ describe('/api/comments', () => {
     });
 
     describe('PUT /[id]', () => {
-        const params = { params: { id: 'c1' } };
+        const params = { params: Promise.resolve({ id: 'c1' }) };
 
         it('should return 401 if unauthorized', async () => {
-            vi.mocked(auth).mockResolvedValue(null);
+            vi.mocked(auth).mockResolvedValue(null as any);
             const req = createRequest({});
             const response = await PUT(req, params) as any;
             expect(response.status).toBe(401);
@@ -178,7 +197,7 @@ describe('/api/comments', () => {
     });
 
     describe('DELETE /[id]', () => {
-        const params = { params: { id: 'c1' } };
+        const params = { params: Promise.resolve({ id: 'c1' }) };
 
         it('should return 403 if forbidden', async () => {
             vi.mocked(auth).mockResolvedValue({ user: { id: 'user-1' } } as any);
@@ -199,6 +218,26 @@ describe('/api/comments', () => {
                 from: vi.fn().mockReturnThis(),
                 where: vi.fn().mockReturnThis(),
                 limit: vi.fn().mockResolvedValue([{ id: 'c1', userId: 'user-1' }]),
+            } as any);
+
+            const req = createRequest({});
+            const response = await DELETE(req, params) as any;
+            expect(response.status).toBe(200);
+            expect(db.delete).toHaveBeenCalled();
+        });
+
+        it('should allow board owner to delete comments from other users', async () => {
+            vi.mocked(auth).mockResolvedValue({ user: { id: 'owner-1' } } as any);
+            vi.mocked(getBoardAccess).mockResolvedValueOnce({
+                board: { id: 'board-1', isPublic: true },
+                canView: true,
+                canEdit: true,
+                isOwner: true,
+            } as any);
+            vi.mocked(db.select).mockReturnValue({
+                from: vi.fn().mockReturnThis(),
+                where: vi.fn().mockReturnThis(),
+                limit: vi.fn().mockResolvedValue([{ id: 'c1', userId: 'author-2', boardId: 'board-1' }]),
             } as any);
 
             const req = createRequest({});

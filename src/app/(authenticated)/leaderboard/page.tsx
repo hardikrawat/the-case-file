@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import AppleSpinner from '@/components/ui/AppleSpinner';
 
 interface LeaderboardEntry {
     userId: string;
     points: number;
     boardsCreated: number;
-    lastActive: Date | null;
+    lastUpdated?: Date | null;
+    userName?: string | null;
+    userImage?: string | null;
 }
 
 export default function LeaderboardPage() {
@@ -23,35 +26,37 @@ export default function LeaderboardPage() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-stone-950 via-stone-900 to-amber-950 p-8">
+        <div className="min-h-screen p-8 bg-transparent text-[var(--foreground)] transition-colors duration-500">
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
-                    <Link href="/cases" className="text-amber-500 hover:text-amber-400 text-sm mb-4 inline-block">
+                    <Link href="/cases" className="text-[var(--sidebar-accent)] hover:underline text-sm mb-4 inline-block font-mono">
                         ← Back to Dashboard
                     </Link>
-                    <h1 className="text-4xl font-bold text-amber-500 font-serif mb-2">Leaderboard</h1>
-                    <p className="text-stone-400">Top detectives by reputation</p>
+                    <h1 className="text-4xl font-bold text-[var(--sidebar-accent)] font-serif mb-2">Leaderboard</h1>
+                    <p className="text-[var(--panel-foreground)]/60">Top detectives by reputation</p>
                 </div>
 
                 {/* Leaderboard */}
-                <div className="bg-stone-900/50 backdrop-blur-sm border border-stone-800 rounded-xl overflow-hidden">
+                <div className="bg-[var(--panel-background)]/80 backdrop-blur-sm border border-[var(--panel-border)] rounded-xl overflow-hidden shadow-2xl">
                     {isLoading ? (
-                        <p className="text-center text-stone-500 py-12">Loading...</p>
+                        <div className="py-16 flex flex-col items-center justify-center">
+                            <AppleSpinner size="lg" label="Decrypting leaderboard dossiers..." />
+                        </div>
                     ) : leaders.length === 0 ? (
-                        <p className="text-center text-stone-500 py-12">No data yet. Start solving cases!</p>
+                        <p className="text-center text-[var(--panel-foreground)]/60 py-12">No data yet. Start solving cases!</p>
                     ) : (
-                        <div className="divide-y divide-stone-800">
+                        <div className="divide-y divide-[var(--panel-border)]">
                             {leaders.map((entry, index) => (
                                 <div
                                     key={entry.userId}
-                                    className="flex items-center gap-4 p-4 hover:bg-stone-800/30 transition-colors"
+                                    className="flex items-center gap-4 p-4 hover:bg-[var(--background)]/40 transition-colors"
                                 >
                                     {/* Rank */}
-                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${index === 0 ? 'bg-yellow-500 text-stone-950' :
-                                        index === 1 ? 'bg-gray-400 text-stone-950' :
-                                            index === 2 ? 'bg-amber-700 text-stone-200' :
-                                                'bg-stone-700 text-stone-300'
+                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${index === 0 ? 'bg-[var(--sidebar-accent)] text-[var(--sidebar-accent-foreground)]' :
+                                        index === 1 ? 'bg-stone-400 text-stone-950' :
+                                            index === 2 ? 'bg-amber-800 text-amber-100' :
+                                                'bg-[var(--background)] text-[var(--panel-foreground)] border border-[var(--panel-border)]'
                                         }`}>
                                         {index + 1}
                                     </div>
@@ -60,17 +65,17 @@ export default function LeaderboardPage() {
                                     <div className="flex-1">
                                         <Link
                                             href={`/profile/${entry.userId}`}
-                                            className="font-medium text-stone-200 hover:text-amber-500 transition-colors"
+                                            className="font-medium text-[var(--foreground)] hover:text-[var(--sidebar-accent)] transition-colors"
                                         >
-                                            Detective #{entry.userId.slice(0, 8)}
+                                            {entry.userName || `Detective #${entry.userId.slice(0, 8)}`}
                                         </Link>
-                                        <p className="text-xs text-stone-500">{entry.boardsCreated} cases solved</p>
+                                        <p className="text-xs text-[var(--panel-foreground)]/60">{entry.boardsCreated} cases solved</p>
                                     </div>
 
                                     {/* Points */}
                                     <div className="text-right">
-                                        <p className="text-2xl font-bold text-amber-500">{entry.points}</p>
-                                        <p className="text-xs text-stone-400">points</p>
+                                        <p className="text-2xl font-bold text-[var(--sidebar-accent)]">{entry.points}</p>
+                                        <p className="text-xs text-[var(--panel-foreground)]/60">points</p>
                                     </div>
                                 </div>
                             ))}
@@ -79,9 +84,9 @@ export default function LeaderboardPage() {
                 </div>
 
                 {/* Info */}
-                <div className="mt-6 p-4 bg-stone-900/30 border border-stone-800 rounded-lg">
-                    <p className="text-sm text-stone-400">
-                        💡 <strong className="text-stone-300">Earn reputation</strong> by creating boards, getting views, and receiving upvotes.
+                <div className="mt-6 p-4 bg-[var(--panel-background)]/30 border border-[var(--panel-border)] rounded-lg">
+                    <p className="text-sm text-[var(--panel-foreground)]/70">
+                        💡 <strong className="text-[var(--foreground)]">Earn reputation</strong> by creating boards, getting views, and receiving upvotes.
                     </p>
                 </div>
             </div>

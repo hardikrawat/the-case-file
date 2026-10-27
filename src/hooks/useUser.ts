@@ -2,6 +2,7 @@
 import useSWR from 'swr';
 import { useSession } from 'next-auth/react';
 import { useMemo } from 'react';
+import { getRankTitle } from '@/lib/ranks';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -32,11 +33,7 @@ export function useUser() {
 
     const rank = useMemo(() => {
         const points = user?.reputationPoints || 0;
-        if (points >= 1000) return "Chief Detective";
-        if (points >= 500) return "Senior Investigator";
-        if (points >= 200) return "Private Eye";
-        if (points >= 50) return "Rookie Cop";
-        return "Patrol Officer";
+        return getRankTitle(points);
     }, [user?.reputationPoints]);
 
     return {
