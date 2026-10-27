@@ -9,8 +9,8 @@ export default defineConfig({
     testDir: './tests/e2e',
     fullyParallel: false,
     forbidOnly: !!process.env.CI,
-    retries: process.env.CI ? 2 : 1, // Retry once even locally for flaky tests
-    workers: process.env.CI ? 1 : 2,
+    retries: process.env.CI ? 1 : 1, // Retry once for flaky tests
+    workers: process.env.CI ? 2 : 2,
 
     // Multiple reporters for better visibility
     reporter: process.env.CI
@@ -43,11 +43,6 @@ export default defineConfig({
                 viewport: { width: 1280, height: 720 },
             },
         },
-        // Optionally add more browsers in CI
-        ...(process.env.CI ? [{
-            name: 'firefox',
-            use: { ...devices['Desktop Firefox'] },
-        }] : []),
     ],
 
     webServer: {

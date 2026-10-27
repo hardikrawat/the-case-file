@@ -1,7 +1,23 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 
+function isTestEmail(email: string): boolean {
+    return (
+        email.endsWith('@testcasefile.dev') ||
+        email.endsWith('@example.com') ||
+        email.endsWith('@test.dev') ||
+        process.env.NODE_ENV === 'test' ||
+        process.env.CI === 'true' ||
+        !RESEND_API_KEY
+    );
+}
+
 export async function sendVerificationEmail(email: string, token: string) {
     const confirmLink = `http://localhost:3000/signup/verify?token=${token}`;
+
+    if (isTestEmail(email)) {
+        console.log(`[TEST EMAIL MOCK] Verification email bypassed for ${email}. Token: ${token}`);
+        return;
+    }
 
     const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -38,6 +54,11 @@ export async function sendVerificationEmail(email: string, token: string) {
 
 export async function sendPasswordResetEmail(email: string, token: string) {
     const resetLink = `http://localhost:3000/reset-password?token=${token}`;
+
+    if (isTestEmail(email)) {
+        console.log(`[TEST EMAIL MOCK] Password reset email bypassed for ${email}. Token: ${token}`);
+        return;
+    }
 
     const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
