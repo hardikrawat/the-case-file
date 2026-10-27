@@ -294,7 +294,7 @@ const Toolbar = ({ isReadOnly }: { isReadOnly?: boolean }) => {
             </div>
 
             <button
-                onClick={toggleDetective}
+                onClick={() => toggleDetective()}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${isDetectiveOpen
                     ? 'bg-amber-500/20 text-amber-500 ring-2 ring-amber-400'
                     : 'hover:bg-[var(--sidebar-accent)]/10 text-[var(--panel-foreground)]'

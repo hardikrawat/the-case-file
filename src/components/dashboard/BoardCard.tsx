@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Board, BoardContent } from "@/lib/types";
-import { Clock, Copy, Globe, Lock, Cpu, User } from "lucide-react";
+import { Clock, Copy, Globe, Lock, Cpu, User, Trash2 } from "lucide-react";
 import BoardPreview, { PreviewEdge, PreviewNode } from "./BoardPreview";
 import { useEffect, useState } from "react";
 import Image from "next/image";
@@ -11,11 +11,16 @@ import AppleSpinner from "@/components/ui/AppleSpinner";
 
 interface BoardCardProps {
     board: Board;
+    currentUserId?: string;
+    onDelete?: (boardId: string) => void;
 }
 
-const BoardCard = ({ board }: BoardCardProps) => {
+const BoardCard = ({ board, currentUserId, onDelete }: BoardCardProps) => {
     const [content, setContent] = useState<BoardContent | null>(board.content || null);
     const [isLoadingPreview, setIsLoadingPreview] = useState(!board.content);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const isOwner = Boolean((currentUserId && board.userId && currentUserId === board.userId) || onDelete);
 
     useEffect(() => {
         let isMounted = true;
@@ -45,9 +50,41 @@ const BoardCard = ({ board }: BoardCardProps) => {
         };
     }, [board.id, content]);
 
+    const handleDelete = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (window.confirm("Are you sure you want to delete this case? This action cannot be undone.")) {
+            setIsDeleting(true);
+            try {
+                const res = await fetch(`/api/boards/${board.id}`, {
+                    method: 'DELETE',
+                });
+                if (res.ok) {
+                    onDelete?.(board.id);
+                } else {
+                    console.error("Failed to delete board");
+                    setIsDeleting(false);
+                }
+            } catch (err) {
+                console.error(err);
+                setIsDeleting(false);
+            }
+        }
+    };
+
     // Safely get nodes from content
     const nodes = (content?.nodes as unknown as PreviewNode[]) || [];
     const edges = (content?.edges as unknown as PreviewEdge[]) || [];
+
+    if (isDeleting) {
+        return (
+            <div className="flex flex-col items-center justify-center bg-panel rounded-xl aspect-square border border-panel-border opacity-50">
+                <AppleSpinner size="md" className="text-red-500 mb-2" />
+                <span className="text-sm font-mono text-panel-foreground">Deleting...</span>
+            </div>
+        );
+    }
 
     return (
         <Link
@@ -71,7 +108,7 @@ const BoardCard = ({ board }: BoardCardProps) => {
                 )}
 
                 {/* Status Badges */}
-                <div className="absolute top-3 right-3 flex gap-2">
+                <div className="absolute top-3 right-3 flex gap-2 z-10">
                     {board.parentId && (
                         <div className="px-2 py-1 rounded bg-[var(--sidebar-accent)]/10 text-[var(--sidebar-accent)] text-xs font-mono flex items-center gap-1 border border-[var(--sidebar-accent)]/20 backdrop-blur-md shadow-sm">
                             <Copy className="w-3 h-3" /> Fork
@@ -85,6 +122,18 @@ const BoardCard = ({ board }: BoardCardProps) => {
                         {board.isPublic ? 'Public' : 'Private'}
                     </div>
                 </div>
+
+                {/* Delete Button (Hover) */}
+                {isOwner && (
+                    <button
+                        onClick={handleDelete}
+                        className="absolute top-3 left-3 p-1.5 rounded-lg bg-white/90 dark:bg-zinc-900/90 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 backdrop-blur-md shadow-md opacity-0 group-hover:opacity-100 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 z-20 flex items-center justify-center cursor-pointer"
+                        title="Delete Case"
+                        aria-label="Delete Case"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                )}
             </div>
 
             {/* Card Content */}

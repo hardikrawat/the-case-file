@@ -4,6 +4,8 @@ import React from 'react';
 import { ArrowRight, Check, X } from 'lucide-react';
 import type { SuggestedConnection } from '@/types/detective';
 
+import useDetectiveStore from '@/store/detectiveStore';
+
 interface SuggestedConnectionCardProps {
   connection: SuggestedConnection;
   onApply: () => void;
@@ -11,18 +13,58 @@ interface SuggestedConnectionCardProps {
 }
 
 export default function SuggestedConnectionCard({ connection, onApply, onDismiss }: SuggestedConnectionCardProps) {
+  const { setGhostEdges, clearGhostEdges, setHighlightedNodes } = useDetectiveStore();
+
   const confidenceColor = 
     connection.confidence === 'high' ? 'bg-green-100 text-green-700 border-green-200' :
     connection.confidence === 'medium' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
     'bg-red-100 text-red-700 border-red-200';
 
+  const sourceName = connection.sourceLabel || connection.sourceNodeId;
+  const targetName = connection.targetLabel || connection.targetNodeId;
+
+  const handleMouseEnter = () => {
+    setGhostEdges([{
+      source: connection.sourceNodeId,
+      target: connection.targetNodeId,
+      label: connection.reasoning
+    }]);
+  };
+
+  const handleMouseLeave = () => {
+    clearGhostEdges();
+  };
+
+  const handleHighlightNode = (nodeId: string) => {
+    setHighlightedNodes(new Set([nodeId]));
+    setTimeout(() => setHighlightedNodes(new Set()), 4000);
+  };
+
   return (
-    <div className="p-3 bg-[var(--panel-background)] border border-[var(--panel-border)] rounded-lg shadow-sm space-y-3">
+    <div 
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className="p-3 bg-[var(--panel-background)] border border-[var(--panel-border)] rounded-lg shadow-sm space-y-3 hover:border-amber-400 transition-colors"
+    >
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm font-medium text-[var(--panel-foreground)] truncate flex-1">
-          <span className="truncate max-w-[120px]">{connection.sourceNodeId}</span>
+        <div className="flex items-center gap-2 text-sm font-semibold text-[var(--panel-foreground)] truncate flex-1">
+          <button
+            type="button"
+            onClick={() => handleHighlightNode(connection.sourceNodeId)}
+            title={sourceName}
+            className="truncate max-w-[120px] text-left hover:text-amber-600 hover:underline"
+          >
+            {sourceName}
+          </button>
           <ArrowRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-          <span className="truncate max-w-[120px]">{connection.targetNodeId}</span>
+          <button
+            type="button"
+            onClick={() => handleHighlightNode(connection.targetNodeId)}
+            title={targetName}
+            className="truncate max-w-[120px] text-left hover:text-amber-600 hover:underline"
+          >
+            {targetName}
+          </button>
         </div>
         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase border ${confidenceColor}`}>
           {connection.confidence}

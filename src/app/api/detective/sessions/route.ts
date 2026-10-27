@@ -5,12 +5,18 @@ import { detectiveSessions } from '@/lib/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import { createId } from '@paralleldrive/cuid2';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function GET(req: Request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rl = await checkRateLimit(`${session.user.id}:sessions_get`, 30, 60000);
+    if (!rl.success) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -38,8 +44,10 @@ export async function GET(req: Request) {
 const sessionSchema = z.object({
   boardId: z.string(),
   sessionId: z.string().optional(),
-  messages: z.array(z.record(z.string(), z.unknown())),
+  messages: z.array(z.record(z.string(), z.unknown())).optional(),
   boardSnapshot: z.record(z.string(), z.unknown()).optional(),
+  lastAnalysis: z.record(z.string(), z.unknown()).optional().nullable(),
+  builderState: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 
 export async function POST(req: Request) {
@@ -49,24 +57,50 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const rl = await checkRateLimit(`${session.user.id}:sessions_post`, 20, 60000);
+    if (!rl.success) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+    }
+
     const body = await req.json();
     const validatedData = sessionSchema.parse(body);
 
+    // 1. Check for existing session matching sessionId AND boardId AND userId (prevents cross-board leaks)
+    let existingSession = null;
     if (validatedData.sessionId) {
-      // Try updating existing session
+      existingSession = await db.query.detectiveSessions.findFirst({
+        where: and(
+          eq(detectiveSessions.id, validatedData.sessionId),
+          eq(detectiveSessions.boardId, validatedData.boardId),
+          eq(detectiveSessions.userId, session.user.id)
+        ),
+      });
+    }
+
+    // 2. Fallback: if no valid sessionId was supplied (or it belonged to another board),
+    // find existing session row for this board and user to avoid duplicate sessions
+    if (!existingSession) {
+      existingSession = await db.query.detectiveSessions.findFirst({
+        where: and(
+          eq(detectiveSessions.boardId, validatedData.boardId),
+          eq(detectiveSessions.userId, session.user.id)
+        ),
+        orderBy: [desc(detectiveSessions.updatedAt)],
+      });
+    }
+
+    if (existingSession) {
+      // Update existing session
       const [updatedSession] = await db
         .update(detectiveSessions)
         .set({
-          messages: validatedData.messages,
-          boardSnapshot: validatedData.boardSnapshot,
+          ...(validatedData.messages !== undefined ? { messages: validatedData.messages } : {}),
+          ...(validatedData.boardSnapshot !== undefined ? { boardSnapshot: validatedData.boardSnapshot } : {}),
+          ...(validatedData.lastAnalysis !== undefined ? { lastAnalysis: validatedData.lastAnalysis } : {}),
+          ...(validatedData.builderState !== undefined ? { builderState: validatedData.builderState } : {}),
           updatedAt: new Date(),
         })
-        .where(
-          and(
-            eq(detectiveSessions.id, validatedData.sessionId),
-            eq(detectiveSessions.userId, session.user.id)
-          )
-        )
+        .where(eq(detectiveSessions.id, existingSession.id))
         .returning();
 
       if (updatedSession) {
@@ -74,15 +108,17 @@ export async function POST(req: Request) {
       }
     }
 
-    // Create new session (either brand new or fallback if previous sessionId was deleted)
+    // 3. Create new session if none exists yet for this board
     const [newSession] = await db
       .insert(detectiveSessions)
       .values({
         id: createId(),
         boardId: validatedData.boardId,
         userId: session.user.id,
-        messages: validatedData.messages,
+        messages: validatedData.messages || [],
         boardSnapshot: validatedData.boardSnapshot,
+        lastAnalysis: validatedData.lastAnalysis,
+        builderState: validatedData.builderState,
       })
       .returning();
 
@@ -103,12 +139,44 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const rl = await checkRateLimit(`${session.user.id}:sessions_delete`, 10, 60000);
+    if (!rl.success) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+    }
+
     const { searchParams } = new URL(req.url);
     const boardId = searchParams.get('boardId');
     const sessionId = searchParams.get('sessionId');
+    const clearMessagesOnly = searchParams.get('clearMessagesOnly') === 'true';
 
     if (!boardId && !sessionId) {
       return NextResponse.json({ error: 'boardId or sessionId is required' }, { status: 400 });
+    }
+
+    if (clearMessagesOnly) {
+      // Only clear messages, preserving lastAnalysis and builderState
+      if (sessionId) {
+        await db
+          .update(detectiveSessions)
+          .set({ messages: [], updatedAt: new Date() })
+          .where(
+            and(
+              eq(detectiveSessions.id, sessionId),
+              eq(detectiveSessions.userId, session.user.id)
+            )
+          );
+      } else if (boardId) {
+        await db
+          .update(detectiveSessions)
+          .set({ messages: [], updatedAt: new Date() })
+          .where(
+            and(
+              eq(detectiveSessions.boardId, boardId),
+              eq(detectiveSessions.userId, session.user.id)
+            )
+          );
+      }
+      return NextResponse.json({ success: true, clearedMessages: true });
     }
 
     if (sessionId) {

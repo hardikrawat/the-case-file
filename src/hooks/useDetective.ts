@@ -3,26 +3,60 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import useStore from '@/store/useStore';
 import useDetectiveStore from '@/store/detectiveStore';
-import type { DetectiveMessage } from '@/types/detective';
+import type { DetectiveMessage, AnalysisResult, BuilderState } from '@/types/detective';
 
 export function useDetective(boardId: string) {
   const { nodes, edges, boardTitle } = useStore();
   const store = useDetectiveStore();
 
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<DetectiveMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  
+  const messages = store.messages;
+  const sessionId = store.currentSessionId;
   const sessionIdRef = useRef<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     sessionIdRef.current = sessionId;
   }, [sessionId]);
 
+  const saveSession = useCallback(async (payload: {
+    messages?: DetectiveMessage[];
+    lastAnalysis?: AnalysisResult | null;
+    builderState?: BuilderState | null;
+    boardSnapshot?: Record<string, unknown>;
+  }) => {
+    if (!boardId) return false;
+    try {
+      const res = await fetch('/api/detective/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          boardId,
+          sessionId: sessionIdRef.current || undefined,
+          ...payload,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.session?.id) {
+          sessionIdRef.current = data.session.id;
+          store.setSessionId(data.session.id);
+        }
+        return true;
+      }
+    } catch (err) {
+      console.error('Failed to save detective session:', err);
+    }
+    return false;
+  }, [boardId, store]);
+
   // Load session history when boardId changes
   useEffect(() => {
     if (!boardId) return;
+    if (store.loadedBoardId === boardId) return; // Already loaded for this board
 
     let isMounted = true;
     const fetchSessionHistory = async () => {
@@ -35,16 +69,25 @@ export function useDetective(boardId: string) {
             if (data.sessions && data.sessions.length > 0) {
               const latest = data.sessions[0];
               const loadedMsgs = (latest.messages || []) as DetectiveMessage[];
-              setSessionId(latest.id);
               store.setSessionId(latest.id);
-              setMessages(loadedMsgs);
               store.setMessages(loadedMsgs);
+              if (latest.lastAnalysis) {
+                store.setAnalysis(latest.lastAnalysis);
+              } else {
+                store.setAnalysis(null);
+              }
+              if (latest.builderState) {
+                store.setBuilderState(latest.builderState);
+              } else {
+                store.setBuilderState(null);
+              }
             } else {
-              setSessionId(null);
               store.setSessionId(null);
-              setMessages([]);
               store.setMessages([]);
+              store.setAnalysis(null);
+              store.setBuilderState(null);
             }
+            store.setLoadedBoardId(boardId);
           }
         }
       } catch (err) {
@@ -102,8 +145,7 @@ export function useDetective(boardId: string) {
     };
 
     const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
-    store.addMessage(userMsg);
+    store.setMessages(newMessages);
     setInput('');
     setIsStreaming(true);
 
@@ -115,12 +157,18 @@ export function useDetective(boardId: string) {
       timestamp: Date.now(),
     };
 
-    setMessages([...newMessages, assistantMsg]);
+    store.setMessages([...newMessages, assistantMsg]);
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
 
     try {
       const response = await fetch('/api/detective/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: abortControllerRef.current.signal,
         body: JSON.stringify({
           boardId,
           boardTitle,
@@ -151,7 +199,7 @@ export function useDetective(boardId: string) {
           const chunk = decoder.decode(value, { stream: true });
           accumulatedContent += chunk;
 
-          setMessages((prev) =>
+          store.setMessages((prev) =>
             prev.map((msg) =>
               msg.id === assistantMsgId ? { ...msg, content: accumulatedContent } : msg
             )
@@ -167,34 +215,16 @@ export function useDetective(boardId: string) {
           content: accumulatedContent,
         };
         const updatedMessages = [...newMessages, finalAssistantMsg];
-        store.addMessage(finalAssistantMsg);
 
         // Persist session to Turso database
-        try {
-          const saveRes = await fetch('/api/detective/sessions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              boardId,
-              sessionId: sessionIdRef.current || undefined,
-              messages: updatedMessages,
-              boardSnapshot: {
-                boardTitle,
-                nodeCount: nodes.length,
-                edgeCount: edges.length,
-              },
-            }),
-          });
-          if (saveRes.ok) {
-            const saveData = await saveRes.json();
-            if (saveData.session?.id) {
-              setSessionId(saveData.session.id);
-              store.setSessionId(saveData.session.id);
-            }
-          }
-        } catch (saveErr) {
-          console.error('Failed to auto-save detective session:', saveErr);
-        }
+        await saveSession({
+          messages: updatedMessages,
+          boardSnapshot: {
+            boardTitle,
+            nodeCount: nodes.length,
+            edgeCount: edges.length,
+          },
+        });
       }
     } catch (error) {
       console.error('Streaming chat error:', error);
@@ -202,39 +232,35 @@ export function useDetective(boardId: string) {
         ...assistantMsg,
         content: `Error: ${error instanceof Error ? error.message : 'Unable to connect with the Detective.'}`,
       };
-      setMessages((prev) =>
+      store.setMessages((prev) =>
         prev.map((msg) => (msg.id === assistantMsgId ? errorMsg : msg))
       );
       store.addMessage(errorMsg);
     } finally {
       setIsStreaming(false);
     }
-  }, [messages, isStreaming, boardId, boardTitle, nodes, edges, store]);
+  }, [messages, isStreaming, boardId, boardTitle, nodes, edges, store, saveSession]);
 
   const clearChat = useCallback(async () => {
     if (isStreaming) return;
-    setMessages([]);
-    store.clearConversation();
+    
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Clear only messages in client store (preserve lastAnalysis & builderState)
+    store.setMessages([]);
     const currentId = sessionIdRef.current;
-    setSessionId(null);
-    store.setSessionId(null);
 
-    if (currentId) {
-      try {
-        await fetch(`/api/detective/sessions?sessionId=${currentId}`, {
-          method: 'DELETE',
-        });
-      } catch (err) {
-        console.error('Failed to delete detective session:', err);
-      }
-    } else if (boardId) {
-      try {
-        await fetch(`/api/detective/sessions?boardId=${boardId}`, {
-          method: 'DELETE',
-        });
-      } catch (err) {
-        console.error('Failed to delete detective session for board:', err);
-      }
+    try {
+      const url = currentId
+        ? `/api/detective/sessions?sessionId=${currentId}&clearMessagesOnly=true`
+        : `/api/detective/sessions?boardId=${boardId}&clearMessagesOnly=true`;
+      await fetch(url, {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      console.error('Failed to clear chat in detective session:', err);
     }
   }, [isStreaming, store, boardId]);
 
@@ -255,11 +281,22 @@ export function useDetective(boardId: string) {
       const res = await fetch('/api/detective/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(300000), // 5-minute timeout
         body: JSON.stringify({ boardId, boardTitle, nodes, edges, type }),
       });
       if (res.ok) {
         const data = await res.json();
         store.setAnalysis(data);
+
+        // Also save to database
+        await saveSession({
+          lastAnalysis: data,
+          boardSnapshot: {
+            boardTitle,
+            nodeCount: nodes.length,
+            edgeCount: edges.length,
+          },
+        });
       }
     } catch (err) {
       console.error('Failed to run analysis:', err);
@@ -278,10 +315,13 @@ export function useDetective(boardId: string) {
     isLoadingHistory,
     analysis: store.lastAnalysis,
     isAnalyzing: store.isAnalyzing,
+    builderState: store.builderState,
+    setBuilderState: store.setBuilderState,
     runAnalysis,
     sendMessage,
-    setMessages,
+    setMessages: store.setMessages,
     clearChat,
+    saveSession,
   };
 }
 

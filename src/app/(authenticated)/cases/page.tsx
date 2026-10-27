@@ -133,7 +133,14 @@ export default function DashboardPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredAndSortedBoards.map((board) => (
-                        <BoardCard key={board.id} board={board} />
+                        <BoardCard 
+                            key={board.id} 
+                            board={board} 
+                            currentUserId={session?.user?.id}
+                            onDelete={(deletedId) => {
+                                setBoards(prev => prev.filter(b => b.id !== deletedId));
+                            }}
+                        />
                     ))}
                 </div>
             )}

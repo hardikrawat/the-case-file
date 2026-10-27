@@ -370,7 +370,7 @@ const useStore = create<RFState>()(
             },
 
             // User Preferences (Persisted)
-            theme: 'theme-cork',
+            theme: 'theme-minimal',
             setTheme: (theme) => set({ theme }),
 
             activeColor: '#fef3c7',

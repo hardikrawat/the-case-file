@@ -12,13 +12,14 @@ const StickyNoteNode = ({ id, data, selected }: NodeProps) => {
 
     // Slight random rotation for "pinned" effect
     const rotation = React.useMemo(() => {
+        if (data?.rotation !== undefined) return data.rotation;
         let hash = 0;
         for (let i = 0; i < id.length; i++) {
             hash = ((hash << 5) - hash) + id.charCodeAt(i);
             hash |= 0;
         }
         return ((hash % 400) / 100).toFixed(2);
-    }, [id]);
+    }, [id, data?.rotation]);
 
     const handleChange = (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (isReadOnly) return;

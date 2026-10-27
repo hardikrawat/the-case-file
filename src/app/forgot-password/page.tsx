@@ -39,22 +39,22 @@ export default function ForgotPasswordPage() {
 
     if (submitted) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-stone-950 via-stone-900 to-amber-950 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gradient-to-br from-[#fdf6e3] via-stone-100 to-amber-50 flex items-center justify-center p-4">
                 <div className="w-full max-w-md">
-                    <div className="bg-stone-900/50 backdrop-blur-sm border border-amber-900/30 rounded-xl p-8 shadow-2xl text-center">
+                    <div className="bg-stone-100 backdrop-blur-sm border border-amber-200 rounded-xl p-8 shadow-2xl text-center">
                         <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                             <svg className="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
                         </div>
-                        <h2 className="text-2xl font-bold text-stone-200 mb-2">Check your email</h2>
-                        <p className="text-stone-400 mb-6">
+                        <h2 className="text-2xl font-bold text-stone-900 mb-2">Check your email</h2>
+                        <p className="text-stone-500 mb-6">
                             If an account exists with <span className="text-amber-500 font-medium">{email}</span>,
                             you&apos;ll receive a password reset link shortly.
                         </p>
                         <Link
                             href="/login"
-                            className="inline-block py-2 px-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-semibold rounded-lg transition-all duration-200"
+                            className="inline-block py-2 px-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-900 font-semibold rounded-lg transition-all duration-200"
                         >
                             Back to Login
                         </Link>
@@ -65,18 +65,18 @@ export default function ForgotPasswordPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-stone-950 via-stone-900 to-amber-950 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-[#fdf6e3] via-stone-100 to-amber-50 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
                 {/* Header */}
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold text-amber-500 font-serif mb-2">
                         The Case File
                     </h1>
-                    <p className="text-stone-400">Forgot your password?</p>
+                    <p className="text-stone-500">Forgot your password?</p>
                 </div>
 
                 {/* Forgot Password Card */}
-                <div className="bg-stone-900/50 backdrop-blur-sm border border-amber-900/30 rounded-xl p-8 shadow-2xl relative overflow-hidden">
+                <div className="bg-stone-100 backdrop-blur-sm border border-amber-200 rounded-xl p-8 shadow-2xl relative overflow-hidden">
                     {/* Loading Overlay */}
                     {isLoading && (
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 animate-in fade-in duration-200">
@@ -84,14 +84,14 @@ export default function ForgotPasswordPage() {
                         </div>
                     )}
 
-                    <h2 className="text-2xl font-bold text-stone-200 mb-2">Reset Password</h2>
-                    <p className="text-sm text-stone-400 mb-6">
+                    <h2 className="text-2xl font-bold text-stone-900 mb-2">Reset Password</h2>
+                    <p className="text-sm text-stone-500 mb-6">
                         Enter your email address and we&apos;ll send you a link to reset your password.
                     </p>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-stone-300 mb-2">
+                            <label htmlFor="email" className="block text-sm font-medium text-stone-800 mb-2">
                                 Email
                             </label>
                             <input
@@ -100,7 +100,7 @@ export default function ForgotPasswordPage() {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full px-4 py-3 bg-stone-800/50 border border-stone-700 rounded-lg text-stone-200 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-transparent transition"
+                                className="w-full px-4 py-3 bg-stone-200/50 border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-transparent transition"
                                 placeholder="detective@example.com"
                                 disabled={isLoading}
                             />
@@ -109,7 +109,7 @@ export default function ForgotPasswordPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-semibold rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-900 font-semibold rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {isLoading ? (
                                 <>

@@ -26,8 +26,14 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Create reset token if user exists (persisted in DB; dispatched out-of-band via email)
-        await createPasswordResetToken(email);
+        // Create reset token if user exists
+        const token = await createPasswordResetToken(email);
+
+        if (token) {
+            const { sendPasswordResetEmail } = await import('@/lib/email');
+            await sendPasswordResetEmail(email, token);
+            console.log(`[AUTH] Password reset link dispatched for ${email}`);
+        }
 
         // Always return generic success message to prevent user enumeration and token leakage
         return NextResponse.json({

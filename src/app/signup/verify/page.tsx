@@ -34,40 +34,39 @@ function VerifyInstructionsContent() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-stone-950 via-stone-900 to-amber-950 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-[#fdf6e3] via-stone-100 to-amber-50 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold text-amber-500 font-serif mb-2">
                         Verify Your Account
                     </h1>
-                    <p className="text-stone-400">One last step, Detective</p>
+                    <p className="text-stone-500">One last step, Detective</p>
                 </div>
 
-                <div className="bg-stone-900/50 backdrop-blur-sm border border-amber-900/30 rounded-xl p-8 shadow-2xl text-center">
+                <div className="bg-stone-100 backdrop-blur-sm border border-amber-200 rounded-xl p-8 shadow-2xl text-center">
                     <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                         <svg className="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                     </div>
 
-                    <h2 className="text-2xl font-bold text-stone-200 mb-4">Check Your Email</h2>
-                    <p className="text-stone-400 mb-8">
+                    <h2 className="text-2xl font-bold text-stone-900 mb-4">Check Your Email</h2>
+                    <p className="text-stone-500 mb-8">
                         We&apos;ve sent a verification link to <span className="text-amber-500 font-medium">{email || 'your email'}</span>.
                         Please click the link to verify your account and start your investigation.
                     </p>
 
-                    {/* Developer Mock Info (Rendered only if verification link containing token was opened) */}
+                    {/* Actual Verification Flow (When user clicks link from email) */}
                     {token && (
-                        <div className="p-4 bg-amber-950/20 border border-amber-900/30 rounded-lg mb-8 text-left">
-                            <p className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-2">Developer Notice (Mocked Email)</p>
-                            <p className="text-sm text-stone-300 mb-4">
-                                In this production-hardened environment, the email service is currently mocked.
-                                You can simulate clicking the verification link by using the button below.
+                        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg mb-8 text-left">
+                            <p className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-2">Clearance Authorization</p>
+                            <p className="text-sm text-stone-800 mb-4">
+                                Secure token detected. Click below to finalize your identity verification.
                             </p>
                             <button
                                 onClick={handleVerify}
                                 disabled={isVerifying}
-                                className="w-full py-2 px-4 bg-amber-600 hover:bg-amber-700 text-stone-950 font-bold rounded transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                className="w-full py-2 px-4 bg-amber-600 hover:bg-amber-700 text-stone-900 font-bold rounded transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                             >
                                 {isVerifying ? (
                                     <>
@@ -75,7 +74,7 @@ function VerifyInstructionsContent() {
                                         <span>Verifying Clearance...</span>
                                     </>
                                 ) : (
-                                    'Simulate Email Verification'
+                                    'Finalize Verification'
                                 )}
                             </button>
                         </div>

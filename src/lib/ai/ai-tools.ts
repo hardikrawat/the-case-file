@@ -11,7 +11,7 @@ export const detectiveTools = {
       reasoning: z.string().describe('Detailed reasoning for why these nodes are connected'),
       confidence: z.enum(['low', 'medium', 'high']).describe('Confidence level of this connection')
     }),
-    execute: async (args: unknown) => args, // Client-side processing
+    execute: async () => "I have recorded your tool call. However, the user cannot see tool calls. You MUST now output a detailed text response summarizing what you just did so the user can read it in the chat.", // Client-side processing
   }),
 
   flag_evidence: tool({
@@ -21,7 +21,7 @@ export const detectiveTools = {
       flagType: z.enum(['critical', 'contradiction', 'unverified', 'needs_review']),
       reasoning: z.string().describe('Why this evidence is being flagged')
     }),
-    execute: async (args: unknown) => args,
+    execute: async () => "I have recorded your tool call. However, the user cannot see tool calls. You MUST now output a detailed text response summarizing what you just did so the user can read it in the chat.",
   }),
 
   request_evidence: tool({
@@ -32,7 +32,7 @@ export const detectiveTools = {
       suggestedType: z.enum(['sticky', 'text', 'image', 'article']).describe('What form the evidence might take'),
       urgency: z.enum(['low', 'medium', 'high'])
     }),
-    execute: async (args: unknown) => args,
+    execute: async () => "I have recorded your tool call. However, the user cannot see tool calls. You MUST now output a detailed text response summarizing what you just did so the user can read it in the chat.",
   }),
 
   generate_timeline: tool({
@@ -45,7 +45,7 @@ export const detectiveTools = {
         confidence: z.enum(['confirmed', 'estimated', 'speculative'])
       }))
     }),
-    execute: async (args: unknown) => args,
+    execute: async () => "I have recorded your tool call. However, the user cannot see tool calls. You MUST now output a detailed text response summarizing what you just did so the user can read it in the chat.",
   }),
 
   identify_cluster: tool({
@@ -55,7 +55,7 @@ export const detectiveTools = {
       nodeIds: z.array(z.string()).describe('The IDs of the nodes in this cluster'),
       summary: z.string().describe('Summary of what this cluster reveals')
     }),
-    execute: async (args: unknown) => args,
+    execute: async () => "I have recorded your tool call. However, the user cannot see tool calls. You MUST now output a detailed text response summarizing what you just did so the user can read it in the chat.",
   }),
 
   generate_hypothesis: tool({
@@ -67,6 +67,6 @@ export const detectiveTools = {
       contradictingEvidenceIds: z.array(z.string()).describe('Node IDs that contradict this hypothesis'),
       confidence: z.enum(['speculative', 'plausible', 'supported', 'strong'])
     }),
-    execute: async (args: unknown) => args,
+    execute: async () => "I have recorded your tool call. However, the user cannot see tool calls. You MUST now output a detailed text response summarizing what you just did so the user can read it in the chat.",
   })
 };

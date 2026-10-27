@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     try {
         // 1. Rate Limiting (IP-based)
         const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
-        const rateLimit = await checkRateLimit(`signup:${ip}`, 5, 3600000); // 5 signups per hour
+        const rateLimit = await checkRateLimit(`signup:${ip}`, 50, 3600000); // 50 signups per hour (increased for testing)
 
         if (!rateLimit.success) {
             return NextResponse.json(
@@ -54,14 +54,14 @@ export async function POST(req: NextRequest) {
         // 4. Hash password
         const passwordHash = await hashPassword(password);
 
-        // 5. Create user (auto-verified in local/development environment)
+        // 5. Create user (unverified pending email confirmation)
         const userId = createId();
         await db.insert(users).values({
             id: userId,
             name,
             email,
             passwordHash,
-            emailVerifiedFlag: true,
+            emailVerifiedFlag: false,
             createdAt: new Date(),
         });
 
@@ -69,14 +69,33 @@ export async function POST(req: NextRequest) {
         const { createExampleBoard } = await import('@/lib/example-case');
         await createExampleBoard(userId);
 
-        // 7. Create verification token (persisted to DB; dispatched out-of-band via email / logged to console)
+        // 7. Create verification token and send email via Resend
         const verificationToken = await createVerificationToken(userId);
-        console.log(`[AUTH] Verification link for ${email}: http://localhost:3000/signup/verify?token=${verificationToken}`);
+        const { sendVerificationEmail } = await import('@/lib/email');
+        
+        try {
+            await sendVerificationEmail(email, verificationToken);
+            console.log(`[AUTH] Verification link dispatched for ${email}`);
+        } catch (emailError) {
+            // Rollback user creation
+            await db.delete(users).where(eq(users.id, userId));
+            console.error('Failed to dispatch email, rolling back user creation.', emailError);
+            
+            let errorMessage = emailError instanceof Error ? emailError.message : 'Unknown email error';
+            if (errorMessage.includes('You can only send testing emails')) {
+                errorMessage = 'Resend sandbox limit: You can only send to your verified Resend email address.';
+            }
+
+            return NextResponse.json(
+                { error: `Email dispatch failed: ${errorMessage}` },
+                { status: 400 }
+            );
+        }
 
         return NextResponse.json({
             success: true,
             userId,
-            message: 'Account created successfully. Your detective clearance is active.',
+            message: 'Account created. Please check your email to verify your clearance.',
         }, { status: 201 });
 
     } catch (error) {

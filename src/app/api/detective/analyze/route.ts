@@ -7,6 +7,8 @@ import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
 import { getModel } from '@/lib/ai/ai-providers';
 import { serializeBoardForAI } from '@/lib/ai/board-serializer';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { decryptApiKey } from '@/lib/ai/encrypt';
 
 // Define the expected output schema based on AnalysisResult from src/types/detective.ts
 // (Assuming a general structure, this can be refined based on the actual type)
@@ -60,11 +62,18 @@ const analysisResultSchema = z.object({
   })).default([]),
 });
 
+export const maxDuration = 300;
+
 export async function POST(req: Request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rl = await checkRateLimit(`${session.user.id}:analyze`, 10, 60000);
+    if (!rl.success) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
     }
 
     const body = await req.json();
@@ -90,7 +99,8 @@ export async function POST(req: Request) {
 
     // Serialize board
     const serializedBoard = serializeBoardForAI(nodes, edges, boardTitle);
-    const model = getModel(config as unknown as import('@/types/detective').AIProviderConfig);
+    const decryptedConfig = { ...config, apiKey: config.apiKey ? decryptApiKey(config.apiKey) : null };
+    const model = getModel(decryptedConfig as unknown as import('@/types/detective').AIProviderConfig);
 
     let prompt = `Analyze the following detective board titled "${boardTitle}".\n`;
     prompt += `Board Data:\n${serializedBoard}\n\n`;
@@ -111,14 +121,15 @@ export async function POST(req: Request) {
         break;
     }
 
-    // Use generateObject
+    // Use generateObject with 5-minute timeout
     const result = await generateObject({
       model,
       schema: analysisResultSchema,
       prompt,
+      abortSignal: AbortSignal.timeout(300000), // 5-minute timeout for complex multi-node reasoning
     });
 
-    return NextResponse.json(result.object);
+    return NextResponse.json({ ...result.object, timestamp: Date.now() });
   } catch (error) {
     console.error('Analysis API Error:', error);
     return NextResponse.json(

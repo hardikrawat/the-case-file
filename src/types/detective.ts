@@ -48,7 +48,7 @@ export interface InformationGap {
   id: string;
   description: string;
   reasoning: string;
-  suggestedType: 'sticky' | 'text' | 'image' | 'article';
+  suggestedType: 'sticky' | 'text' | 'image' | 'article' | 'link';
   urgency: 'low' | 'medium' | 'high';
 }
 
@@ -97,10 +97,78 @@ export interface AnalysisResult {
   timestamp: number;
 }
 
+export interface BuilderHistoryEntry {
+  statement: string;
+  caseTitle?: string;
+  timestamp: number;
+  nodeCount: number;
+  edgeCount: number;
+  mode?: 'replace' | 'append';
+  density?: 'balanced' | 'comprehensive';
+}
+
+export interface BuilderState {
+  statement: string;
+  mode?: 'replace' | 'append';
+  density?: 'balanced' | 'comprehensive';
+  lastGeneratedStats?: { nodeCount: number; edgeCount: number } | null;
+  lastGeneratedAt?: number | null;
+  caseTitle?: string | null;
+  summary?: string | null;
+  hypotheses?: Array<{
+    title: string;
+    summary: string;
+    confidence: 'speculative' | 'plausible' | 'supported' | 'strong';
+  }>;
+  history?: BuilderHistoryEntry[];
+}
+
 export interface DetectiveSession {
   id: string;
   boardId: string;
   messages: DetectiveMessage[];
+  lastAnalysis?: AnalysisResult | null;
+  builderState?: BuilderState | null;
   createdAt: number;
   updatedAt: number;
 }
+
+export type PanelMode = 'investigate' | 'intelligence' | 'builder';
+
+export interface AgenticBoardRequest {
+  statement: string;
+  boardId: string;
+  mode: 'replace' | 'append';
+  density?: 'balanced' | 'comprehensive';
+}
+
+export interface GeneratedNode {
+  id: string;
+  type: 'sticky' | 'text' | 'article' | 'image' | 'link';
+  category: 'incident' | 'suspect' | 'victim' | 'clue' | 'alibi' | 'location' | 'timeline' | 'lead';
+  label: string;
+  description?: string;
+  color?: string;
+  position: { x: number; y: number };
+}
+
+export interface GeneratedEdge {
+  id: string;
+  source: string;
+  target: string;
+  label: string;
+  reasoning?: string;
+}
+
+export interface AgenticBoardResult {
+  caseTitle: string;
+  summary: string;
+  nodes: GeneratedNode[];
+  edges: GeneratedEdge[];
+  hypotheses?: Array<{
+    title: string;
+    summary: string;
+    confidence: 'speculative' | 'plausible' | 'supported' | 'strong';
+  }>;
+}
+

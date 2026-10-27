@@ -5,6 +5,9 @@ import { aiConfigurations } from '@/lib/schema';
 import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
 import { createId } from '@paralleldrive/cuid2';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { encryptApiKey } from '@/lib/ai/encrypt';
+import { normalizeOllamaUrl } from '@/lib/ai/ai-providers';
 
 const configSchema = z.object({
   provider: z.string(),
@@ -18,6 +21,11 @@ export async function GET() {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rl = await checkRateLimit(`${session.user.id}:config_get`, 30, 60000);
+    if (!rl.success) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
     }
 
     const config = await db.query.aiConfigurations.findFirst({
@@ -50,13 +58,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const rl = await checkRateLimit(`${session.user.id}:config_post`, 20, 60000);
+    if (!rl.success) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+    }
+
     const body = await req.json();
     const validatedData = configSchema.parse(body);
-
-    // In a real implementation, we might validate the config by making a test call here
+    const providerLower = validatedData.provider.toLowerCase();
 
     // Deactivate existing active configs
-    await db
+    const activeConfigs = await db
       .update(aiConfigurations)
       .set({ isActive: false })
       .where(
@@ -64,7 +76,30 @@ export async function POST(req: Request) {
           eq(aiConfigurations.userId, session.user.id),
           eq(aiConfigurations.isActive, true)
         )
-      );
+      )
+      .returning();
+
+    const previousConfig = activeConfigs.length > 0 ? activeConfigs[0] : null;
+
+    let finalApiKey: string | null = null;
+    let finalBaseUrl: string | null = null;
+
+    if (providerLower === 'ollama') {
+      finalApiKey = null;
+      finalBaseUrl = normalizeOllamaUrl(validatedData.baseUrl);
+    } else {
+      finalBaseUrl = null;
+      if (validatedData.apiKey && validatedData.apiKey !== '********' && validatedData.apiKey.trim() !== '') {
+        finalApiKey = encryptApiKey(validatedData.apiKey.trim());
+      } else if (
+        previousConfig &&
+        previousConfig.provider?.toLowerCase() === providerLower &&
+        previousConfig.apiKey
+      ) {
+        // Re-use saved key only for the same provider
+        finalApiKey = previousConfig.apiKey;
+      }
+    }
 
     // Insert new config
     const [newConfig] = await db
@@ -72,10 +107,10 @@ export async function POST(req: Request) {
       .values({
         id: createId(),
         userId: session.user.id,
-        provider: validatedData.provider,
+        provider: providerLower,
         modelId: validatedData.modelId,
-        apiKey: validatedData.apiKey || null,
-        baseUrl: validatedData.baseUrl || null,
+        apiKey: finalApiKey,
+        baseUrl: finalBaseUrl,
         isActive: true,
       })
       .returning();
@@ -101,6 +136,11 @@ export async function DELETE() {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rl = await checkRateLimit(`${session.user.id}:config_delete`, 10, 60000);
+    if (!rl.success) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
     }
 
     await db

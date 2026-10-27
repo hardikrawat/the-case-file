@@ -65,6 +65,7 @@ export async function GET() {
     try {
         let userBoards = await db.select({
             id: boards.id,
+            userId: boards.userId,
             title: boards.title,
             isPublic: boards.isPublic,
             thumbnail: boards.thumbnail,
@@ -91,6 +92,7 @@ export async function GET() {
 
             userBoards = await db.select({
                 id: boards.id,
+                userId: boards.userId,
                 title: boards.title,
                 isPublic: boards.isPublic,
                 thumbnail: boards.thumbnail,

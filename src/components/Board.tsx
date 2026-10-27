@@ -8,6 +8,7 @@ import ReactFlow, {
     BackgroundVariant,
     addEdge,
     Node,
+    Edge,
     type ReactFlowInstance,
 } from 'reactflow';
 
@@ -56,6 +57,7 @@ import { CollaboratorsPanel } from '@/components/CollaboratorsPanel';
 import { VersionHistory } from '@/components/VersionHistory';
 import { ExportModal } from '@/components/ExportModal';
 import DetectivePanel from '@/components/detective/DetectivePanel';
+import useDetectiveStore from '@/store/detectiveStore';
 
 // Bug 4: Context for isReadOnly to avoid perf-killing .map() in render
 import { IsReadOnlyContext, useIsReadOnly } from '@/context/ReadOnlyContext';
@@ -99,7 +101,7 @@ const safeGetState = () => {
     return {
         loadBoard: () => {},
         resetBoard: () => {},
-        setBoardVersion: () => {},
+        setBoardVersion: () => {}, boardVersion: 1,
         deleteNode: () => {},
         deleteEdge: () => {},
         autoSaveEnabled: true,
@@ -134,7 +136,6 @@ const Board = () => {
     const [isBoardLoading, setIsBoardLoading] = useState(true);
     const [conflictInfo, setConflictInfo] = useState<{ message: string; serverVersion?: number } | null>(null);
 
-    const currentVersionRef = useRef<number>(1);
     const isLoadedRef = useRef<boolean>(false);
     const lastSavedSnapshotRef = useRef<string>('');
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -178,6 +179,58 @@ const Board = () => {
 
     const nodes = useStore((state) => state.nodes);
     const edges = useStore((state) => state.edges);
+    const highlightedNodes = useDetectiveStore((state) => state.highlightedNodes);
+    const ghostEdges = useDetectiveStore((state) => state.ghostEdges);
+
+    const displayNodes = useMemo(() => {
+        if (!highlightedNodes || highlightedNodes.size === 0) return nodes;
+        return nodes.map((n) => {
+            if (highlightedNodes.has(n.id)) {
+                return {
+                    ...n,
+                    className: `${n.className || ''} ring-4 ring-amber-500 ring-offset-2 animate-pulse shadow-2xl`,
+                };
+            }
+            return n;
+        });
+    }, [nodes, highlightedNodes]);
+
+    const displayEdges = useMemo(() => {
+        if (!ghostEdges || ghostEdges.length === 0) return edges;
+        const ghostList: Edge[] = ghostEdges.map((ge, idx) => ({
+            id: `ghost-${idx}-${ge.source}-${ge.target}`,
+            source: ge.source,
+            target: ge.target,
+            type: 'string',
+            animated: true,
+            style: { strokeDasharray: '6, 6', stroke: '#f59e0b', strokeWidth: 3 },
+            data: { label: ge.label ? `Suggested: ${ge.label}` : 'Suggested link' },
+        }));
+        return [...edges, ...ghostList];
+    }, [edges, ghostEdges]);
+
+    const fitViewTrigger = useDetectiveStore((state) => state.fitViewTrigger);
+
+    useEffect(() => {
+        if (fitViewTrigger > 0 && rfInstanceRef.current) {
+            requestAnimationFrame(() => {
+                rfInstanceRef.current?.fitView({ padding: 0.3, duration: 700 });
+            });
+        }
+    }, [fitViewTrigger]);
+
+    useEffect(() => {
+        if (highlightedNodes && highlightedNodes.size > 0 && rfInstanceRef.current) {
+            const targetId = Array.from(highlightedNodes)[0];
+            const node = nodes.find((n) => n.id === targetId);
+            if (node) {
+                rfInstanceRef.current.setCenter(node.position.x + 100, node.position.y + 100, {
+                    zoom: 1.1,
+                    duration: 600,
+                });
+            }
+        }
+    }, [highlightedNodes, nodes]);
     const onNodesChange = useStore((state) => state.onNodesChange);
     const onEdgesChange = useStore((state) => state.onEdgesChange);
     const onConnect = useStore((state) => state.onConnect);
@@ -204,33 +257,71 @@ const Board = () => {
 
     const handleAutoArrange = useCallback(() => {
         if (nodes.length === 0) return;
-        const cols = Math.max(2, Math.ceil(Math.sqrt(nodes.length * 1.4)));
-        const colSpacing = 340;
-        const rowSpacing = 280;
-        const startX = 120;
-        const startY = 120;
+        
+        import('d3-force').then(({ forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide, forceX, forceY }) => {
+            const simNodes = nodes.map(n => ({ 
+                id: n.id, 
+                x: n.position.x || 0, 
+                y: n.position.y || 0,
+                radius: 200 // Approximate radius of a node for collision detection
+            }));
+            
+            const simEdges = edges.map(e => ({
+                source: e.source,
+                target: e.target
+            }));
 
-        const newNodes = nodes.map((node, index) => {
-            const col = index % cols;
-            const row = Math.floor(index / cols);
-            return {
-                ...node,
-                position: {
-                    x: startX + col * colSpacing + (row % 2 === 1 ? 25 : 0),
-                    y: startY + row * rowSpacing,
-                },
-            };
-        });
+            // Evidence boards have strings pulling connected clues together, 
+            // but they push away from each other to prevent overlap.
+            const simulation = forceSimulation(simNodes)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .force('link', forceLink(simEdges).id((d: any) => d.id).distance(450))
+                .force('charge', forceManyBody().strength(-1500))
+                .force('collide', forceCollide().radius(250).iterations(3))
+                .force('center', forceCenter(0, 0))
+                .force('x', forceX().strength(0.05))
+                .force('y', forceY().strength(0.05))
+                .stop();
 
-        setNodes(newNodes);
-        toast.success('Evidence board organized');
-        // Bug 175: Use requestAnimationFrame instead of setTimeout
-        requestAnimationFrame(() => {
-            if (rfInstanceRef.current) {
-                rfInstanceRef.current.fitView({ padding: 0.25, duration: 400 });
+            // Run simulation synchronously (300 ticks is generally enough for stability)
+            const NUM_ITERATIONS = Math.min(300, Math.max(100, nodes.length * 10));
+            for (let i = 0; i < NUM_ITERATIONS; ++i) {
+                simulation.tick();
             }
+
+            // Map results back to nodes, adding a bit of varied rotation
+            const newNodes = nodes.map((node) => {
+                const simNode = simNodes.find(n => n.id === node.id);
+                // Assign a more pronounced angle based on ID so they look messy/pinned organically
+                const hash = node.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                const angle = -6 + (hash % 13);
+                
+                return {
+                    ...node,
+                    position: {
+                        x: simNode ? simNode.x : node.position.x,
+                        y: simNode ? simNode.y : node.position.y,
+                    },
+                    data: {
+                        ...node.data,
+                        rotation: angle
+                    }
+                };
+            });
+
+            setNodes(newNodes);
+            toast.success('Evidence board organized');
+            
+            requestAnimationFrame(() => {
+                if (rfInstanceRef.current) {
+                    rfInstanceRef.current.fitView({ padding: 0.25, duration: 800 });
+                }
+            });
+        }).catch(err => {
+            console.error("Failed to organize board:", err);
+            toast.error("Failed to organize board.");
         });
-    }, [nodes, setNodes]);
+    }, [nodes, edges, setNodes]);
 
     // Unauthenticated users or non-authorized viewers MUST be read-only
     const isReadOnly = useMemo(() => {
@@ -282,7 +373,7 @@ const Board = () => {
                     setBoardMetadata(data.title || 'Untitled Case', Boolean(data.isPublic), data.parentId || null);
                 }
 
-                currentVersionRef.current = boardVer;
+                safeGetState().setBoardVersion?.(boardVer);
                 lastSavedSnapshotRef.current = createCleanSnapshot(loadedNodes, loadedEdges);
                 setBoardOwnerId(data.userId);
                 setParentTitle(data.parentTitle || null);
@@ -329,6 +420,7 @@ const Board = () => {
         if (!boardId) return;
 
         safeGetState().resetBoard?.();
+        useDetectiveStore.getState().resetDetectiveSession(boardId);
         isLoadedRef.current = false;
         setIsBoardLoading(true);
         setSaveStatus('idle');
@@ -348,6 +440,7 @@ const Board = () => {
                 saveAbortRef.current.abort();
             }
             safeGetState().resetBoard?.();
+            useDetectiveStore.getState().resetDetectiveSession(null);
             isLoadedRef.current = false;
             // Bug 85: Null ref on unmount
             rfInstanceRef.current = null;
@@ -427,7 +520,7 @@ const Board = () => {
             saveAbortRef.current = controller;
 
             try {
-                const versionToSend = currentVersionRef.current;
+                const versionToSend = safeGetState().boardVersion;
                 const res = await fetch(`/api/boards/${boardId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -443,7 +536,6 @@ const Board = () => {
                 if (res.status === 200) {
                     const data = await res.json();
                     const newVersion = data.version ?? versionToSend + 1;
-                    currentVersionRef.current = newVersion;
                     safeGetState().setBoardVersion?.(newVersion);
                     lastSavedSnapshotRef.current = currentSnapshot;
                     setLastSaved(new Date());
@@ -829,7 +921,7 @@ const Board = () => {
                 }
 
                 // 2. Persist restored state to database with optimistic version lock
-                const versionToSend = currentVersionRef.current;
+                const versionToSend = safeGetState().boardVersion;
                 const res = await fetch(`/api/boards/${boardId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -844,7 +936,6 @@ const Board = () => {
                 if (res.status === 200) {
                     const data = await res.json();
                     const newVersion = data.version ?? versionToSend + 1;
-                    currentVersionRef.current = newVersion;
                     safeGetState().setBoardVersion?.(newVersion);
 
                     // Update canvas state
@@ -993,7 +1084,7 @@ const Board = () => {
                             <button
                                 onClick={async () => {
                                     // Force save by advancing to server version
-                                    currentVersionRef.current = conflictInfo.serverVersion || (currentVersionRef.current + 1);
+                                    safeGetState().setBoardVersion?.(conflictInfo.serverVersion || (safeGetState().boardVersion + 1));
                                     setConflictInfo(null);
                                     setSaveStatus('unsaved');
                                     await performSave(true);
@@ -1377,8 +1468,8 @@ const Board = () => {
                 </div>
 
                 <ReactFlow
-                    nodes={nodes} // Bug 4: No more .map() - isReadOnly via context
-                    edges={edges}
+                    nodes={displayNodes}
+                    edges={displayEdges}
                     nodeTypes={nodeTypes}
                     edgeTypes={edgeTypes}
                     defaultEdgeOptions={defaultEdgeOpts} // Bug 198: Memoized outside

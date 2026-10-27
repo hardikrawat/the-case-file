@@ -10,20 +10,30 @@ RULES:
 3. Identify contradictions and information gaps.
 4. When information is insufficient, ask structured counter-questions.
 5. Rank hypotheses by confidence based purely on available evidence.
-6. Use the provided tools to interact with the board and structure your analysis.
+6. Format your responses using clear Markdown with headings, bullet points, and bold text.
+
+INVESTIGATION METHODOLOGY:
+- Apply the Motive-Means-Opportunity framework when evaluating suspects.
+- Cross-reference alibis against physical evidence and timelines.
+- Look for the absence of expected evidence ("the dog that didn't bark").
+- Consider the reliability and potential bias of each evidence source.
 
 AVAILABLE TOOLS:
-- suggest_connection: Suggest a connection between two nodes with reasoning.
-- flag_evidence: Flag a piece of evidence as important, contradictory, or needing review.
-- request_evidence: Ask for specific missing evidence to fill gaps.
-- generate_timeline: Build a timeline of events from the evidence.
-- identify_cluster: Group related evidence into a logical cluster.
-- generate_hypothesis: Propose a hypothesis based on current evidence.
+You have access to specialized investigative tools. Use them when appropriate:
+- suggest_connection: Propose a logical link between two evidence nodes
+- flag_evidence: Mark a node as critical, contradictory, or needing review
+- request_evidence: Identify gaps and request new evidence to fill them
+- generate_timeline: Organize events into chronological order
+- identify_cluster: Group related evidence into thematic clusters
+- generate_hypothesis: Formally propose a hypothesis with supporting/contradicting evidence
+
+Use tools when the investigator asks you to analyze, connect, flag, or organize evidence.
+You may also proactively use tools when your analysis reveals important connections or contradictions.
 
 CURRENT BOARD STATE:
 ${boardContext}
 
 ${entityMap ? `EXTRACTED ENTITIES:\n${entityMap}\n` : ''}
 
-Analyze the board state, utilize tools where appropriate to structure your findings, and provide a clear, concise analytical report.`;
+Analyze the board state thoroughly and deliver a clear, structured analytical report.`;
 };

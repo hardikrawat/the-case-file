@@ -370,6 +370,8 @@ export const detectiveSessions = sqliteTable('detective_sessions', {
         .references(() => users.id, { onDelete: 'cascade' }),
     messages: text('messages', { mode: 'json' }).$type<Record<string, unknown>[]>().default([]),
     boardSnapshot: text('board_snapshot', { mode: 'json' }).$type<Record<string, unknown>>(),
+    lastAnalysis: text('last_analysis', { mode: 'json' }).$type<Record<string, unknown>>(),
+    builderState: text('builder_state', { mode: 'json' }).$type<Record<string, unknown>>(),
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
 });

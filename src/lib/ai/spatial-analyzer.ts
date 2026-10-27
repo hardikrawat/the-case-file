@@ -7,6 +7,42 @@ export interface SpatialAnalysis {
   density: string;
 }
 
+export function clusterNodes(nodes: Node[], distanceThreshold: number = 300): Node[][] {
+  const clusters: Node[][] = [];
+  const visited = new Set<string>();
+
+  for (const node of nodes) {
+    if (visited.has(node.id)) continue;
+
+    const cluster: Node[] = [node];
+    visited.add(node.id);
+
+    let addedToCluster = true;
+    while (addedToCluster) {
+      addedToCluster = false;
+      
+      for (const otherNode of nodes) {
+        if (visited.has(otherNode.id)) continue;
+        
+        const isClose = cluster.some(clusterNode => {
+          const dx = (clusterNode.position?.x || 0) - (otherNode.position?.x || 0);
+          const dy = (clusterNode.position?.y || 0) - (otherNode.position?.y || 0);
+          return Math.sqrt(dx * dx + dy * dy) <= distanceThreshold;
+        });
+
+        if (isClose) {
+          cluster.push(otherNode);
+          visited.add(otherNode.id);
+          addedToCluster = true;
+        }
+      }
+    }
+    
+    clusters.push(cluster);
+  }
+  return clusters;
+}
+
 export const analyzeSpatialLayout = (nodes: Node[], edges: Edge[]): SpatialAnalysis => {
   const DISTANCE_THRESHOLD = 300;
   
@@ -34,40 +70,7 @@ export const analyzeSpatialLayout = (nodes: Node[], edges: Edge[]): SpatialAnaly
   const isolatedNodes = nodes.filter(n => !connectedNodeIds.has(n.id));
 
   // Clusters
-  const clusters: Node[][] = [];
-  const visited = new Set<string>();
-
-  for (const node of nodes) {
-    if (visited.has(node.id)) continue;
-
-    const cluster: Node[] = [node];
-    visited.add(node.id);
-
-    let addedToCluster = true;
-    while (addedToCluster) {
-      addedToCluster = false;
-      
-      for (const otherNode of nodes) {
-        if (visited.has(otherNode.id)) continue;
-        
-        const isClose = cluster.some(clusterNode => {
-          const dx = (clusterNode.position?.x || 0) - (otherNode.position?.x || 0);
-          const dy = (clusterNode.position?.y || 0) - (otherNode.position?.y || 0);
-          return Math.sqrt(dx * dx + dy * dy) <= DISTANCE_THRESHOLD;
-        });
-
-        if (isClose) {
-          cluster.push(otherNode);
-          visited.add(otherNode.id);
-          addedToCluster = true;
-        }
-      }
-    }
-    
-    if (cluster.length > 1) {
-      clusters.push(cluster);
-    }
-  }
+  const clusters = clusterNodes(nodes, DISTANCE_THRESHOLD).filter(c => c.length > 1);
 
   // Density calculation
   let density = 'sparse';
